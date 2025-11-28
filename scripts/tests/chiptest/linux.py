@@ -176,22 +176,24 @@ class IsolatedNetworkNamespace:
             log.warning("Some addresses look to still be tentative")
 
     def _setup(self):
-        for command in self.COMMANDS_SETUP:
-            self._run(command)
+        self._run(self.COMMANDS_SETUP)
 
     def setup_app_link_up(self, wait_for_dad: bool = True):
-        for command in self.COMMANDS_APP_LINK_UP:
-            self._run(command)
+        self._run(self.COMMANDS_APP_LINK_UP)
         if wait_for_dad:
             self._wait_for_duplicate_address_detection()
 
-    def _setup_tool_link_up(self, wait_for_dad=True):
-        for command in self.COMMANDS_TOOL_LINK_UP:
-            self._run(command)
+    def _setup_tool_link_up(self, wait_for_dad: bool = True):
+        self._run(self.COMMANDS_TOOL_LINK_UP)
         if wait_for_dad:
             self._wait_for_duplicate_address_detection()
 
-    def _run(self, command: str):
+    def _run(self, command: str | list[str]):
+        if isinstance(command, list):
+            for c in command:
+                self._run(c)
+            return
+
         command = command.format(app_link_name=self.app_link_name,
                                  tool_link_name=self.tool_link_name,
                                  index=self.index)
@@ -202,8 +204,7 @@ class IsolatedNetworkNamespace:
             sys.exit(1)
 
     def terminate(self):
-        for command in self.COMMANDS_TERMINATE:
-            self._run(command)
+        self._run(self.COMMANDS_TERMINATE)
 
 
 class LinuxNamespacedExecutor(Executor):
