@@ -13,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import dataclasses
 import logging
 import os
 import shlex
@@ -26,6 +27,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum, StrEnum, auto
 from pathlib import Path
+
+import click
 
 from .accessories import AppsRegister
 from .runner import LogPipe, Runner, SubprocessInfo
@@ -237,66 +240,26 @@ class TestTarget(Enum):
 
 @dataclass
 class ApplicationPaths:
-    chip_tool: SubprocessInfo | None
-    all_clusters_app: SubprocessInfo | None
-    lock_app: SubprocessInfo | None
-    fabric_bridge_app: SubprocessInfo | None
-    ota_provider_app: SubprocessInfo | None
-    ota_requestor_app: SubprocessInfo | None
-    tv_app: SubprocessInfo | None
-    bridge_app: SubprocessInfo | None
-    lit_icd_app: SubprocessInfo | None
-    microwave_oven_app: SubprocessInfo | None
-    matter_repl_yaml_tester_cmd: SubprocessInfo | None
-    chip_tool_with_python_cmd: SubprocessInfo | None
-    rvc_app: SubprocessInfo | None
-    network_manager_app: SubprocessInfo | None
-    energy_gateway_app: SubprocessInfo | None
-    energy_management_app: SubprocessInfo | None
-    closure_app: SubprocessInfo | None
+    chip_tool: SubprocessInfo
+    all_clusters_app: SubprocessInfo
+    lock_app: SubprocessInfo
+    fabric_bridge_app: SubprocessInfo
+    ota_provider_app: SubprocessInfo
+    ota_requestor_app: SubprocessInfo
+    tv_app: SubprocessInfo
+    bridge_app: SubprocessInfo
+    lit_icd_app: SubprocessInfo
+    microwave_oven_app: SubprocessInfo
+    matter_repl_yaml_tester_cmd: SubprocessInfo
+    chip_tool_with_python_cmd: SubprocessInfo
+    rvc_app: SubprocessInfo
+    network_manager_app: SubprocessInfo
+    energy_gateway_app: SubprocessInfo
+    energy_management_app: SubprocessInfo
+    closure_app: SubprocessInfo
 
-    def items(self) -> list[SubprocessInfo | None]:
-        return [self.chip_tool, self.all_clusters_app, self.lock_app,
-                self.fabric_bridge_app, self.ota_provider_app, self.ota_requestor_app,
-                self.tv_app, self.bridge_app, self.lit_icd_app,
-                self.microwave_oven_app, self.matter_repl_yaml_tester_cmd,
-                self.chip_tool_with_python_cmd, self.rvc_app, self.network_manager_app,
-                self.energy_gateway_app, self.energy_management_app, self.closure_app]
-
-    def items_with_key(self) -> list[tuple[SubprocessInfo | None, str]]:
-        """
-        Returns all path items and also the corresponding "Application Key" which
-        is the typical application name.
-
-        This is to provide scripts a consistent way to reference a path, even if
-        the paths used for individual appplications contain different names
-        (e.g. they could be wrapper scripts).
-        """
-        return [
-            (self.chip_tool, "chip-tool"),
-            (self.all_clusters_app, "chip-all-clusters-app"),
-            (self.lock_app, "chip-lock-app"),
-            (self.fabric_bridge_app, "fabric-bridge-app"),
-            (self.ota_provider_app, "chip-ota-provider-app"),
-            (self.ota_requestor_app, "chip-ota-requestor-app"),
-            (self.tv_app, "chip-tv-app"),
-            (self.bridge_app, "chip-bridge-app"),
-            (self.lit_icd_app, "lit-icd-app"),
-            (self.microwave_oven_app, "chip-microwave-oven-app"),
-            (self.matter_repl_yaml_tester_cmd, "yamltest_with_matter_repl_tester.py"),
-            (
-                # This path varies, however it is a fixed python tool so it may be ok
-                self.chip_tool_with_python_cmd,
-                (self.chip_tool_with_python_cmd.path.name
-                 if self.chip_tool_with_python_cmd is not None
-                 else "chiptool.py"),
-            ),
-            (self.rvc_app, "chip-rvc-app"),
-            (self.network_manager_app, "matter-network-manager-app"),
-            (self.energy_gateway_app, "chip-energy-gateway-app"),
-            (self.energy_management_app, "chip-energy-management-app"),
-            (self.closure_app, "closure-app"),
-        ]
+    def paths(self) -> tuple[SubprocessInfo, ...]:
+        return tuple(getattr(self, field.name) for field in dataclasses.fields(self))
 
 
 @dataclass
@@ -398,56 +361,50 @@ class TestDefinition:
         loggedCapturedLogs = False
 
         try:
-            if self.target == TestTarget.ALL_CLUSTERS:
-                target_app = apps.all_clusters_app
-            elif self.target == TestTarget.TV:
-                target_app = apps.tv_app
-            elif self.target == TestTarget.LOCK:
-                target_app = apps.lock_app
-            elif self.target == TestTarget.FABRIC_SYNC:
-                target_app = apps.fabric_bridge_app
-            elif self.target == TestTarget.OTA:
-                target_app = apps.ota_requestor_app
-            elif self.target == TestTarget.BRIDGE:
-                target_app = apps.bridge_app
-            elif self.target == TestTarget.LIT_ICD:
-                target_app = apps.lit_icd_app
-            elif self.target == TestTarget.MWO:
-                target_app = apps.microwave_oven_app
-            elif self.target == TestTarget.RVC:
-                target_app = apps.rvc_app
-            elif self.target == TestTarget.NETWORK_MANAGER:
-                target_app = apps.network_manager_app
-            elif self.target == TestTarget.ENERGY_GATEWAY:
-                target_app = apps.energy_gateway_app
-            elif self.target == TestTarget.ENERGY_MANAGEMENT:
-                target_app = apps.energy_management_app
-            elif self.target == TestTarget.CLOSURE:
-                target_app = apps.closure_app
-            else:
-                raise Exception("Unknown test target - "
-                                "don't know which application to run")
+            target_mapping = {
+                TestTarget.ALL_CLUSTERS: apps.all_clusters_app,
+                TestTarget.TV: apps.tv_app,
+                TestTarget.LOCK: apps.lock_app,
+                TestTarget.FABRIC_SYNC: apps.fabric_bridge_app,
+                TestTarget.OTA: apps.ota_requestor_app,
+                TestTarget.BRIDGE: apps.bridge_app,
+                TestTarget.LIT_ICD: apps.lit_icd_app,
+                TestTarget.MWO: apps.microwave_oven_app,
+                TestTarget.RVC: apps.rvc_app,
+                TestTarget.NETWORK_MANAGER: apps.network_manager_app,
+                TestTarget.ENERGY_GATEWAY: apps.energy_gateway_app,
+                TestTarget.ENERGY_MANAGEMENT: apps.energy_management_app,
+                TestTarget.CLOSURE: apps.closure_app
+            }
+            if (target_app := target_mapping.get(self.target)) is None:
+                raise Exception("Unknown test target - don't know which application to run")
 
             if not dry_run:
-                for command, key in apps.items_with_key():
+                for command in apps.paths():
                     # Do not add chip-tool or matter-repl-yaml-tester-cmd to the register
-                    if (command == apps.chip_tool
-                            or command == apps.matter_repl_yaml_tester_cmd
-                            or command == apps.chip_tool_with_python_cmd):
+                    if command in (apps.chip_tool, apps.matter_repl_yaml_tester_cmd, apps.chip_tool_with_python_cmd):
                         continue
+
+                    # For the app indicated by self.target, give it the 'default' key to add to the register
+                    key = command.path_finder_key
+                    if command == target_app:
+                        key = 'default'
 
                     # Skip items where we don't actually have a path.  This can
                     # happen if the relevant application does not exist.  It's
                     # non-fatal as long as we are not trying to run any tests that
                     # need that application.
-                    if command is None:
+                    try:
+                        command.path_resolved
+                    except click.BadOptionUsage as e:
+                        if key == 'default':
+                            raise e
+                        log.warning("Didn't specify nor found the following %s: %s. Excluding from execution.", command.kind, key)
                         continue
 
-                    # For the app indicated by self.target, give it the 'default' key to add to the register
-                    if command == target_app:
-                        key = 'default'
                     if ble_controller_app is not None:
                         command = command.with_args("--ble-controller", str(ble_controller_app), "--wifi")
+
                     app = App(runner, command)
                     # Add the App to the register immediately, so if it fails during
                     # start() we will be able to clean things up properly.
@@ -515,7 +472,7 @@ class TestDefinition:
                     interactive_server_args = interactive_server_args + ['--interface-id', '-1']
 
                 server_args = (
-                    '--server_path', str(apps.chip_tool.path),
+                    '--server_path', str(apps.chip_tool.path_resolved),
                     '--server_arguments', ' '.join(interactive_server_args))
 
                 pairing_cmd = pairing_cmd.with_args(*server_args)

@@ -4,6 +4,7 @@ import io
 import json
 import logging
 import time
+from pathlib import Path
 from subprocess import PIPE
 
 import click
@@ -11,7 +12,6 @@ from chiptest.accessories import AppsRegister
 from chiptest.darwin import DarwinExecutor
 from chiptest.runner import Runner, SubprocessInfo
 from chiptest.test_definition import App, ExecutionCapture
-from chipyaml.paths_finder import PathsFinder
 
 log = logging.getLogger(__name__)
 
@@ -107,19 +107,9 @@ def main(context):
     help='The file to use for our OTA candidate JSON.  This file does not need to exist.')
 @click.pass_context
 def cmd_run(context, darwin_framework_tool, ota_requestor_app, ota_data_file, ota_image_file, ota_destination_file, ota_candidate_file):
-    paths_finder = PathsFinder()
-
-    if darwin_framework_tool is None:
-        darwin_framework_tool = paths_finder.get('darwin-framework-tool')
-    if ota_requestor_app is None:
-        ota_requestor_app = paths_finder.get('chip-ota-requestor-app')
-
-    if darwin_framework_tool is not None:
-        darwin_framework_tool = SubprocessInfo(kind='tool', path=darwin_framework_tool)
-
-    if ota_requestor_app is not None:
-        ota_requestor_app = SubprocessInfo(kind='app', path=ota_requestor_app,
-                                           args=('--otaDownloadPath', ota_destination_file))
+    darwin_framework_tool = SubprocessInfo('tool', Path(darwin_framework_tool), 'darwin-framework-tool', '--darwin-framework-tool')
+    ota_requestor_app = SubprocessInfo('app', Path(ota_requestor_app), "chip-ota-requestor-app", "--ota-requestor-app",
+                                       args=('--otaDownloadPath', ota_destination_file))
 
     runner = Runner(executor=DarwinExecutor())
     runner.capture_delegate = ExecutionCapture()

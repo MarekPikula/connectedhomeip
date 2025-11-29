@@ -14,40 +14,82 @@
 # limitations under the License.
 
 
+import logging
 import os
 import tempfile
 from pathlib import Path
+from queue import Queue
 
 import click
-from diskcache import Cache
+
+log = logging.getLogger(__name__)
 
 _PATHS_CACHE_NAME = 'yaml_runner_cache'
-_PATHS_CACHE = Cache(os.path.join(tempfile.gettempdir(), _PATHS_CACHE_NAME))
+try:
+    from diskcache import Cache
+    _paths_cache = Cache(Path(tempfile.gettempdir()) / _PATHS_CACHE_NAME)
+except ImportError:
+    _paths_cache = {}
+_PATH_NOT_FOUND = "//NOT_FOUND//"
+_path_check_queue: Queue[str] = Queue()
 
-DEFAULT_CHIP_ROOT = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+DEFAULT_CHIP_ROOT = Path(__file__).parent.parent.parent.parent.absolute()
 
 
-class PathsFinder:
-    def __init__(self, root_dir: str = DEFAULT_CHIP_ROOT):
-        self.__root_dir = root_dir
+def queue_find_file_path(target_name: str):
+    global _path_check_queue
+    _path_check_queue.put(target_name)
 
-    def get(self, target_name: str) -> str | None:
-        path = _PATHS_CACHE.get(target_name)
-        if path and Path(path).is_file():
+
+def find_file_path(target_name: str, try_again: bool = False) -> Path | None:
+    """Find file path and cache the result.
+
+    Arguments:
+        target_name -- target file name
+
+    Keyword Arguments:
+        try_again -- try again if cached as not found (default: {False})
+
+    Returns:
+        Valid file path if file exists or None if not found.
+    """
+    global _paths_cache, _path_check_queue
+
+    # First check if it already exists in cache.
+    if (path_cached := _paths_cache.get(target_name)) is not None:
+        if path_cached == _PATH_NOT_FOUND and not try_again:
+            return None
+
+        if isinstance(path_cached, str) and (path := Path(path_cached)).is_file():
             return path
 
-        if path:
-            del _PATHS_CACHE[target_name]
+        del _paths_cache[target_name]
 
-        for path in Path(self.__root_dir).rglob(target_name):
-            if not path.is_file() or path.name != target_name:
-                continue
+    # Flush path check queue.
+    targets_to_find = [target_name]
+    while not _path_check_queue.empty():
+        targets_to_find.append(_path_check_queue.get())
 
-            _PATHS_CACHE[target_name] = str(path)
-            return str(path)
+    # Walk the filesystem looking for all target paths in the queue.
+    log.debug("Looking for app path for '%s'", target_name)
+    targets_to_add = {target: Path(dirpath) / target
+                      for dirpath, _, filenames in os.walk(DEFAULT_CHIP_ROOT)
+                      for target in targets_to_find
+                      if target in filenames}
 
-        return None
+    # Add all targets either as found or not found.
+    for target in targets_to_find:
+        target_path = targets_to_add.get(target)
+        _paths_cache[target] = _PATH_NOT_FOUND if target_path is None else str(target_path)
+
+    # Return result for this request.
+    return targets_to_add.get(target_name)
+
+
+def clear_cache() -> None:
+    global _paths_cache
+    for key in _paths_cache:
+        del _paths_cache[key]
 
 
 @click.group()
@@ -58,8 +100,15 @@ def finder():
 @finder.command()
 def view():
     """View the cache entries."""
-    for name in _PATHS_CACHE:
-        print(click.style(f'{name}', bold=True) + f':\t{_PATHS_CACHE[name]}')
+    global _paths_cache
+
+    if len(tuple(_paths_cache.iterkeys())) == 0:
+        print("Cache is empty.")
+        return
+
+    name_max_len = max(len(str(name)) for name in _paths_cache)
+    for name in _paths_cache:
+        print(click.style(f'{name}: ', bold=True) + (" "*(name_max_len-len(str(name)))) + str(_paths_cache[name]))
 
 
 @finder.command()
@@ -67,31 +116,30 @@ def view():
 @click.argument('value', type=str)
 def add(key: str, value: str):
     """Add a cache entry."""
-    _PATHS_CACHE[key] = value
+    global _paths_cache
+    _paths_cache[key] = value
 
 
 @finder.command()
 @click.argument('name', type=str)
 def delete(name: str):
     """Delete a cache entry."""
-    if name in _PATHS_CACHE:
-        del _PATHS_CACHE[name]
+    global _paths_cache
+    if name in _paths_cache:
+        del _paths_cache[name]
 
 
 @finder.command()
 def reset():
     """Delete all cache entries."""
-    for name in _PATHS_CACHE:
-        del _PATHS_CACHE[name]
+    clear_cache()
 
 
 @finder.command()
 @click.argument('name', type=str)
 def search(name: str):
     """Search for a target and add it to the cache."""
-    paths_finder = PathsFinder()
-    path = paths_finder.get(name)
-    if path:
+    if (path := find_file_path(name)) is not None:
         print(f'The target "{name}" has been added with the value "{path}".')
     else:
         print(f'The target "{name}" was not found.')

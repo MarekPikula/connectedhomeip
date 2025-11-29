@@ -14,17 +14,20 @@
 
 from __future__ import annotations
 
+import functools
 import logging
 import os
-import pathlib
 import pty
 import queue
 import re
 import subprocess
 import threading
-import typing
 from dataclasses import dataclass
+from pathlib import Path
 from typing import IO, TYPE_CHECKING, Any, Literal, Protocol
+
+import click
+from chipyaml import paths_finder
 
 if TYPE_CHECKING:
     from .test_definition import AppsRegister, ExecutionCapture
@@ -136,26 +139,46 @@ class RunnerWaitQueue:
         return self.queue.get()
 
 
-@dataclass
+@dataclass(frozen=True)
 class SubprocessInfo:
     # Restricted as this identifies the name of the network namespace in an executor implementing
     # test case isolation.
     kind: Literal['app', 'tool']
-    path: pathlib.Path
+    _path: Path | None  # Private, as it shouldn't be accessed directly but via path_resolved property.
+    path_finder_key: str
+    click_option_name: str | None = None
     wrapper: tuple[str, ...] = ()
     args: tuple[str, ...] = ()
 
     def __post_init__(self):
-        self.path = pathlib.Path(self.path)
+        # Cache possible checks to process them in bulk.
+        paths_finder.queue_find_file_path(self.path_finder_key)
+
+    def with_path(self, path: Path | None = None, paths_finder_key: str | None = None):
+        return SubprocessInfo(self.kind, self._path if path is None else path,
+                              self.path_finder_key if paths_finder_key is None else paths_finder_key,
+                              self.click_option_name, self.wrapper, self.args)
 
     def with_args(self, *args: str):
-        return SubprocessInfo(kind=self.kind, path=self.path, wrapper=self.wrapper, args=self.args + tuple(args))
+        return SubprocessInfo(self.kind, self._path, self.path_finder_key, self.click_option_name, wrapper=self.wrapper, args=self.args + tuple(args))
 
     def wrap_with(self, *args: str):
-        return SubprocessInfo(kind=self.kind, path=self.path, wrapper=tuple(args) + self.wrapper, args=self.args)
+        return SubprocessInfo(self.kind, self._path, self.path_finder_key, self.click_option_name, wrapper=tuple(args) + self.wrapper, args=self.args)
 
-    def to_cmd(self) -> typing.List[str]:
-        return list(self.wrapper) + [str(self.path)] + list(self.args)
+    @functools.cached_property
+    def path_resolved(self) -> Path:
+        if self._path is not None:
+            return self._path
+
+        if (path := paths_finder.find_file_path(self.path_finder_key)) is None:
+            error_msg = f'{self.kind.capitalize()} "{self.path_finder_key}" is not specified as argument nor can it be found automatically'
+            if self.click_option_name is None:
+                raise FileNotFoundError(error_msg)
+            raise click.BadOptionUsage(self.click_option_name, error_msg)
+        return path.absolute()
+
+    def to_cmd(self) -> list[str]:
+        return list(self.wrapper) + [str(self.path_resolved)] + list(self.args)
 
 
 class Executor:

@@ -22,7 +22,6 @@ import time
 import typing
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal
 
 import chiptest
 import click
@@ -31,7 +30,7 @@ from chiptest.accessories import AppsRegister
 from chiptest.glob_matcher import GlobMatcher
 from chiptest.runner import Executor, SubprocessInfo
 from chiptest.test_definition import TestDefinition, TestRunTime, TestTag
-from chipyaml.paths_finder import PathsFinder
+from chipyaml import paths_finder
 
 log = logging.getLogger(__name__)
 
@@ -62,7 +61,7 @@ class RunContext:
     root: str
     tests: typing.List[chiptest.TestDefinition]
     in_unshare: bool
-    chip_tool: SubprocessInfo | None
+    chip_tool: SubprocessInfo
     dry_run: bool
     runtime: TestRunTime
 
@@ -141,10 +140,16 @@ ExistingFilePath = click.Path(exists=True, dir_okay=False, path_type=Path)
     '--chip-tool',
     type=ExistingFilePath,
     help='Binary path of chip tool app to use to run the test')
+@click.option(
+    '--reset-path-cache',
+    is_flag=True,
+    default=False,
+    help="Reset the path cache of application binaries"
+)
 @click.pass_context
 def main(context: click.Context, dry_run: bool, log_level: str, target: str, target_glob: str, target_skip_glob: str,
          no_log_timestamps: bool, root: str, internal_inside_unshare: bool, include_tags: tuple[TestTag, ...],
-         exclude_tags: tuple[TestTag, ...], runner: str, chip_tool: Path | None) -> None:
+         exclude_tags: tuple[TestTag, ...], runner: str, chip_tool: Path | None, reset_path_cache: bool) -> None:
     # Ensures somewhat pretty logging of what is going on
     log_fmt = '%(asctime)s.%(msecs)03d %(levelname)-7s %(message)s'
     if no_log_timestamps:
@@ -157,18 +162,13 @@ def main(context: click.Context, dry_run: bool, log_level: str, target: str, tar
     elif runner == 'darwin_framework_tool_python':
         runtime = TestRunTime.DARWIN_FRAMEWORK_TOOL_PYTHON
 
-    chip_tool_info: SubprocessInfo | None = None
-    if chip_tool is not None:
-        chip_tool_info = SubprocessInfo(kind='tool', path=chip_tool)
-    elif runtime != TestRunTime.MATTER_REPL_PYTHON:
-        paths_finder = PathsFinder()
-        if runtime == TestRunTime.CHIP_TOOL_PYTHON:
-            chip_tool_path = paths_finder.get('chip-tool')
-        else:  # DARWIN_FRAMEWORK_TOOL_PYTHON
-            chip_tool_path = paths_finder.get('darwin-framework-tool')
+    if reset_path_cache:
+        log.debug("Resetting path cache")
+        paths_finder.clear_cache()
 
-        if chip_tool_path is not None:
-            chip_tool_info = SubprocessInfo(kind='tool', path=Path(chip_tool_path))
+    chip_tool_info = SubprocessInfo('tool', chip_tool, "chip-tool", "--chip-tool")
+    if runtime == TestRunTime.DARWIN_FRAMEWORK_TOOL_PYTHON:
+        chip_tool_info = chip_tool_info.with_path(paths_finder_key="darwin-framework-tool")
 
     # Figures out selected test that match the given name(s)
     if runtime == TestRunTime.MATTER_REPL_PYTHON:
@@ -354,43 +354,32 @@ def cmd_run(context: click.Context, iterations: int, all_clusters_app: Path | No
         log.error("--expected-failures '%s' used without '--keep-going'", expected_failures)
         sys.exit(2)
 
-    paths_finder = PathsFinder()
+    all_clusters_app_info = SubprocessInfo('app', all_clusters_app, 'chip-all-clusters-app', "--all-clusters-app")
+    lock_app_info = SubprocessInfo('app', lock_app, 'chip-lock-app', "--lock-app")
+    fabric_bridge_app_info = SubprocessInfo('app', fabric_bridge_app, 'fabric-bridge-app', "--fabric-bridge-app")
+    ota_provider_app_info = SubprocessInfo('app', ota_provider_app, 'chip-ota-provider-app', "--ota-provider-app")
+    ota_requestor_app_info = SubprocessInfo('app', ota_requestor_app, 'chip-ota-requestor-app', "--ota-requestor-app")
+    tv_app_info = SubprocessInfo('app', tv_app, 'chip-tv-app', "--tv-app")
+    bridge_app_info = SubprocessInfo('app', bridge_app, 'chip-bridge-app', "--bridge-app")
+    lit_icd_app_info = SubprocessInfo('app', lit_icd_app, 'lit-icd-app', "--lit-icd-app")
+    microwave_oven_app_info = SubprocessInfo('app', microwave_oven_app, 'chip-microwave-oven-app', "--microwave-oven-app")
+    rvc_app_info = SubprocessInfo('app', rvc_app, 'chip-rvc-app', "--rvc-app")
+    network_manager_app_info = SubprocessInfo('app', network_manager_app, 'matter-network-manager-app', "--network-manager-app")
+    energy_gateway_app_info = SubprocessInfo('app', energy_gateway_app, 'chip-energy-gateway-app', "--energy-gateway-app")
+    energy_management_app_info = SubprocessInfo(
+        'app', energy_management_app, 'chip-energy-management-app', "--energy-management-app")
+    closure_app_info = SubprocessInfo('app', closure_app,  'closure-app', "--closure-app")
 
-    def build_app(arg_value: Path | None, kind: Literal['app', 'tool'], key: str) -> SubprocessInfo | None:
-        log.debug("Constructing app %s...", key)
-        app_path = arg_value if arg_value is not None else paths_finder.get(key)
-        return None if app_path is None else SubprocessInfo(kind=kind, path=Path(app_path))
+    matter_repl_yaml_tester_info = SubprocessInfo(
+        'tool', matter_repl_yaml_tester, 'yamltest_with_matter_repl_tester.py', "--matter-repl-yaml-tester", wrapper=('python3',))
 
-    all_clusters_app_info = build_app(all_clusters_app, 'app', 'chip-all-clusters-app')
-    lock_app_info = build_app(lock_app, 'app', 'chip-lock-app')
-    fabric_bridge_app_info = build_app(fabric_bridge_app, 'app', 'fabric-bridge-app')
-    ota_provider_app_info = build_app(ota_provider_app, 'app', 'chip-ota-provider-app')
-    ota_requestor_app_info = build_app(ota_requestor_app, 'app', 'chip-ota-requestor-app')
-    tv_app_info = build_app(tv_app, 'app', 'chip-tv-app')
-    bridge_app_info = build_app(bridge_app, 'app', 'chip-bridge-app')
-    lit_icd_app_info = build_app(lit_icd_app, 'app', 'lit-icd-app')
-    microwave_oven_app_info = build_app(microwave_oven_app, 'app', 'chip-microwave-oven-app')
-    rvc_app_info = build_app(rvc_app, 'app', 'chip-rvc-app')
-    network_manager_app_info = build_app(network_manager_app, 'app', 'matter-network-manager-app')
-    energy_gateway_app_info = build_app(energy_gateway_app, 'app', 'chip-energy-gateway-app')
-    energy_management_app_info = build_app(energy_management_app, 'app', 'chip-energy-management-app')
-    closure_app_info = build_app(closure_app, 'app', 'closure-app')
-
-    matter_repl_yaml_tester_info = build_app(matter_repl_yaml_tester, 'tool',
-                                             'yamltest_with_matter_repl_tester.py')
-    if matter_repl_yaml_tester_info is not None:
-        matter_repl_yaml_tester_info = matter_repl_yaml_tester_info.wrap_with('python3')
-
+    chip_tool_with_python_info = SubprocessInfo(
+        'tool', chip_tool_with_python, 'chiptool.py', "--chip-tool-with-python", wrapper=('python3',))
     if context.obj.runtime == TestRunTime.DARWIN_FRAMEWORK_TOOL_PYTHON:
-        chip_tool_with_python_info = build_app(chip_tool_with_python, 'tool', 'darwinframeworktool.py')
-    else:
-        chip_tool_with_python_info = build_app(chip_tool_with_python, 'tool', 'chiptool.py')
-
-    if chip_tool_with_python_info is not None:
-        chip_tool_with_python_info = chip_tool_with_python_info.wrap_with('python3')
+        chip_tool_with_python_info = chip_tool_with_python_info.with_path(paths_finder_key='darwinframeworktool.py')
 
     if ble_wifi and sys.platform != "linux":
-        raise click.BadOptionUsage("ble-wifi", "Option --ble-wifi is available on Linux platform only")
+        raise click.BadOptionUsage("--ble-wifi", "Option --ble-wifi is available on Linux platform only")
 
     # Command execution requires an array
     paths = chiptest.ApplicationPaths(

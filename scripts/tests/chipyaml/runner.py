@@ -25,7 +25,7 @@ import traceback
 from dataclasses import dataclass
 
 import click
-from paths_finder import PathsFinder
+from paths_finder import find_file_path
 from tests_finder import TestsFinder
 from tests_logger import TestParserLogger, TestRunnerLogger, WebSocketRunnerLogger
 
@@ -314,8 +314,7 @@ def websocket(parser_group: ParserGroup, adapter: str, stop_on_error: bool, stop
     runner_config = TestRunnerConfig(adapter, parser_group.pseudo_clusters, runner_options, runner_hooks)
 
     if server_path is None and server_name:
-        paths_finder = PathsFinder()
-        server_path = paths_finder.get(server_name)
+        server_path = find_file_path(server_name)
 
     websocket_runner_hooks = WebSocketRunnerLogger()
     websocket_runner_config = WebSocketRunnerConfig(
