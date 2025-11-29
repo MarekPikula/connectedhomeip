@@ -20,7 +20,7 @@ import sys
 from typing import List
 
 import click
-from paths_finder import PathsFinder
+from paths_finder import find_file_path
 from runner import CONTEXT_SETTINGS, darwinframeworktool
 from tests_tool import send_raw_command, send_yaml_command
 
@@ -76,8 +76,7 @@ def darwinframeworktool_py(ctx, commands: List[str], server_path: str, server_na
                                     additional_pseudo_clusters_directory, commands[2:])
     else:
         if server_path is None and server_name:
-            paths_finder = PathsFinder()
-            server_path = paths_finder.get(server_name)
+            server_path = find_file_path(server_name)
         success = send_raw_command(' '.join(commands), server_path, server_arguments)
 
     sys.exit(0 if success else 1)
