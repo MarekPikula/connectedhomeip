@@ -205,5 +205,9 @@
     },
     "files.exclude": {
         "**/examples/**/third_party/connectedhomeip/**": true
-    }
+    },
+    "mypy-type-checker.args": [
+        "--config-file=src/python_testing/matter_testing_infrastructure/mypy.ini",
+        "--follow-imports=skip"
+    ]
 }
