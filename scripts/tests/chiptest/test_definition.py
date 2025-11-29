@@ -274,7 +274,9 @@ class ApplicationPaths:
             (
                 # This path varies, however it is a fixed python tool so it may be ok
                 self.chip_tool_with_python_cmd,
-                self.chip_tool_with_python_cmd.path.name,
+                (self.chip_tool_with_python_cmd.path.name
+                 if self.chip_tool_with_python_cmd is not None
+                 else "chiptool.py"),
             ),
             (self.rvc_app, "chip-rvc-app"),
             (self.network_manager_app, "matter-network-manager-app"),
@@ -465,6 +467,8 @@ class TestDefinition:
                 setupCode = app.setupCode
 
             if test_runtime == TestRunTime.MATTER_REPL_PYTHON:
+                assert apps.matter_repl_yaml_tester_cmd is not None, \
+                    "Matter REPL YAML tester should have been set for selected test runtime"
                 python_cmd = apps.matter_repl_yaml_tester_cmd.with_args(
                     '--setup-code', setupCode, '--yaml-path', self.run_name, "--pics-file", str(pics_file))
 
@@ -473,7 +477,11 @@ class TestDefinition:
                 else:
                     runner.RunSubprocess(python_cmd, name='MATTER_REPL_YAML_TESTER',
                                          dependencies=[apps_register], timeout_seconds=timeout_seconds)
-            else:
+            else:  # CHIP_TOOL_PYTHON
+                assert apps.chip_tool is not None, \
+                    "Chip tool should have been set for selected test runtime"
+                assert apps.chip_tool_with_python_cmd is not None, \
+                    "Chip tool with Python should have been set for selected test runtime"
                 pairing_server_args = []
 
                 if ble_controller_tool is not None:
