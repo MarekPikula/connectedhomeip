@@ -426,7 +426,7 @@ def cmd_run(context: click.Context, iterations: int, all_clusters_app: Path | No
                 log.info("Cleaning up %s", item.__class__.__name__)
                 item.terminate()
             except Exception as e:
-                log.error("Encountered error during cleanup: %s", e, exc_info=True)
+                log.warning("Encountered exception during cleanup: %s", e)
         to_terminate.clear()
 
     try:
