@@ -22,7 +22,8 @@ elif sys.platform == "darwin":
 
 from chiptest.accessories import AppsRegister
 from chiptest.concurrent.config import WorkerConfig
-from chiptest.mp_utils.process import ProcessState, WrappedProcess
+from chiptest.mp_utils.process import WrappedProcess
+from chiptest.mp_utils.state import ProcessState
 from chiptest.runner import Executor
 from chiptest.test_definition import TEST_THREAD_DATASET, TestDefinition
 

@@ -299,7 +299,7 @@ class SubprocessInfoRepo(dict):
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.paths = paths
-        self.subproc_knowhow = subproc_knowhow if subproc_knowhow is not None else BUILTIN_SUBPROC_DATA
+        self.subproc_knowhow = subproc_knowhow if subproc_knowhow is not None else BUILTIN_SUBPROC_DATA.copy()
 
     def addSpec(self, spec: str, kind: SubprocessKind | None = None):
         """Add a path to the repo as specified on the command line"""

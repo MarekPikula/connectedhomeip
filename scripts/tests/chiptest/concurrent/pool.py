@@ -13,7 +13,8 @@ from chiptest.concurrent.worker import WorkerJob, WorkerProcessCls, WorkerResult
 from chiptest.log_utils import LogConfig
 from chiptest.mp_utils.common import StartStopContextMixin, mp_wrapped_spawn_context
 from chiptest.mp_utils.pool import WrappedProcessPool
-from chiptest.mp_utils.process import ProcessState, WorkQueueCancelled
+from chiptest.mp_utils.queue import WorkQueueCancelled
+from chiptest.mp_utils.state import ProcessState
 from chiptest.test_definition import TestDefinition
 
 log = logging.getLogger(__name__)
