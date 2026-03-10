@@ -24,7 +24,7 @@ class TestJobConfig:
     commissioning_method: str
     concurrency: int
     concurrency_status: float
-    concurrenct_scheduler: TestSchedulerType
+    concurrency_scheduler: TestSchedulerType
     dry_run: bool
     subproc_info_repo: SubprocessInfoRepo
     pics_file: Path

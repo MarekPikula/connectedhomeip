@@ -44,13 +44,13 @@ class TestPool(WrappedProcessPool[WorkerProcessCls, WorkerConfig, WorkerJob, Wor
         self._status_thread = PeriodicStatusThread(self.config_template, self.work_queue, self._results_thread, self.state)
 
         self.scheduler: SchedulerFunc
-        match config.concurrenct_scheduler:
+        match config.concurrency_scheduler:
             case TestSchedulerType.FAST:
                 self.scheduler = self._scheduler_fast
             case TestSchedulerType.REPRODUCIBLE:
                 self.scheduler = self._scheduler_reproducible
-            case _:
-                raise ValueError(f"Unknown scheduler type: {self.config.concurrenct_scheduler}")
+            case scheduler_type:
+                raise ValueError(f"Unknown scheduler type: {scheduler_type}")
 
     def collect_exceptions(self) -> Literal[True]:
         super().collect_exceptions()
@@ -117,5 +117,3 @@ class TestPool(WrappedProcessPool[WorkerProcessCls, WorkerConfig, WorkerJob, Wor
                     lambda states: pool.collect_exceptions() and all(state.phase == ProcessState.Phase.CLOSED for state in states))
             except WorkQueueCancelled:
                 log.debug("Received a cancel event on a work queue")
-            except WorkerError as e:
-                log.error("%s", e)

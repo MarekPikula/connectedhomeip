@@ -6,9 +6,10 @@ from multiprocessing.context import SpawnContext
 from multiprocessing.managers import SyncManager
 from typing import Generic, Literal, TypeVar
 
-from chiptest.mp_utils.process import ProcessConfigTemplate, ProcessState, WrappedProcess
+from chiptest.mp_utils.config import ProcessConfigTemplate
+from chiptest.mp_utils.process import WrappedProcess
 from chiptest.mp_utils.queue import WorkQueue
-from chiptest.mp_utils.state import ProcessGroupState
+from chiptest.mp_utils.state import ProcessGroupState, ProcessState
 
 log = logging.getLogger(__name__)
 

@@ -141,7 +141,7 @@ class WorkQueue(Generic[WorkRequestT, WorkResponseT]):
 
     def req_put(self, req: WorkRequestT, req_queue_id: int = 0) -> None:
         """Put a request to one of the request queues."""
-        if req_queue_id > len(self._req):
+        if req_queue_id >= len(self._req):
             raise ValueError(f"No request queue with ID {req_queue_id}")
         self._req[req_queue_id].put(req)
 

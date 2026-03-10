@@ -94,7 +94,7 @@ class WrappedProcess(ABC, Generic[ConfigT, WorkRequestT, WorkResponseT]):
                         raise RuntimeError("Process is in unexpected state")
         except BaseException as e:
             if not isinstance(e, KeyboardInterrupt):
-                log.exception("Stopping process %s on failure during inititialization", self.name)
+                log.exception("Stopping process %s on failure during initialization", self.name)
             self.stop()
             raise
 

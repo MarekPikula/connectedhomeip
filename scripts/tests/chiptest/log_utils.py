@@ -59,6 +59,7 @@ class LogConfig:
 
         self._filter.task_name = task
         for handler in logger.handlers:
+            # addFilter is idempotent, so we don't need to check if it's already added.
             handler.addFilter(self._filter)
 
 

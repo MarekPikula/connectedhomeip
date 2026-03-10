@@ -99,8 +99,11 @@ class XmlRpcServerProcess(WrappedProcess, StartStopContextMixin):
 class XmlRpcServerProcessManager(threading.Thread):
     def __init__(self, apps: AppsRegister) -> None:
         super().__init__(name="XmlRpcProcManager")
-        self._apps = apps
+
+        # From docs: Manager processes will be shutdown as soon as they are garbage collected or their parent process exits.
         self._mp_manager = multiprocessing.Manager()
+
+        self._apps = apps
         self._work_queue = WorkQueue[XmlRpcFuncCallT, XmlRpcFuncRetT](self._mp_manager)
 
         self._init_done = threading.Event()
@@ -191,12 +194,12 @@ def with_accessories_lock(fn: Callable[Concatenate[S, P], R]) -> Callable[Concat
 
 
 class AppsRegister:
-    def __init__(self, net_ns_wrapper: str | None = None, log_config: LogConfig = LogConfig()) -> None:
+    def __init__(self, net_ns_wrapper: str | None = None, log_config: LogConfig | None = None) -> None:
         self._accessories: dict[str, App] = {}
         self._accessories_lock = threading.RLock()
 
         self.net_ns_wrapper = net_ns_wrapper
-        self.log_config = log_config
+        self.log_config = log_config if log_config is not None else LogConfig()
 
         self._server = XmlRpcServerProcessManager(self)
 

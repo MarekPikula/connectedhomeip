@@ -173,7 +173,7 @@ ExistingFilePath = click.Path(exists=True, dir_okay=False, path_type=Path)
 @click.option(
     '--log-timestamps/--no-log-timestamps',
     default=True,
-    help='Show timestaps in log output')
+    help='Show timestamps in log output')
 @click.option(
     '--root',
     default=DEFAULT_CHIP_ROOT,
@@ -473,7 +473,7 @@ class Terminable(Protocol):
     type=click.Choice(TestSchedulerType, case_sensitive=False),  # type: ignore[arg-type]
     default=TestSchedulerType.REPRODUCIBLE,
     help=('Type of scheduler to use when running tests concurrently. "reproducible" is the default scheduler that tries to '
-          'minimize randomness in test execution order, while "fast" scheduler prioritizes overall execution time over '''
+          'minimize randomness in test execution order, while "fast" scheduler prioritizes overall execution time over '
           'reproducibility.')
 )
 @click.pass_context
