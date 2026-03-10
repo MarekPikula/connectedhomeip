@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
 import enum
 import json
 import logging
@@ -25,7 +24,7 @@ import sys
 import time
 import warnings
 from collections import Counter
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -33,7 +32,7 @@ import chiptest
 import click
 from chiptest.concurrent.config import TestJobConfig, TestSchedulerType
 from chiptest.concurrent.pool import TestPool
-from chiptest.concurrent.worker import WorkerError
+from chiptest.concurrent.worker import TestStatus, WorkerError
 from chiptest.glob_matcher import GlobMatcher
 from chiptest.log_utils import LOG_LEVELS, LogConfig
 from chiptest.runner import SubprocessKind
@@ -68,48 +67,6 @@ class RunContext:
 
     # Deprecated options passed to `cmd_run`
     deprecated_chip_tool_path: Path | None = None
-
-
-class TestStatus(enum.Enum):
-    # TODO: Move to the proper place
-    PASSED = "passed"
-    FAILED = "failed"
-    DRY_RUN = "dry_run"
-
-
-@dataclass
-class TestResult:
-    name: str
-    iteration: int
-    status: TestStatus
-    duration_seconds: float
-
-
-@dataclass
-class RunSummary:
-    run_timestamp: datetime.datetime
-    iterations: int
-    total_runs: int = 0
-    passed: int = 0
-    failed: int = 0
-    results: list[TestResult] = field(default_factory=list)
-
-    def record(self, name: str, iteration: int, status: TestStatus, duration: float) -> None:
-        self.results.append(TestResult(name=name, iteration=iteration, status=status, duration_seconds=round(duration, 3)))
-        if status == TestStatus.PASSED:
-            self.passed += 1
-        elif status == TestStatus.FAILED:
-            self.failed += 1
-
-    def write_json(self, path: Path) -> None:
-        data = asdict(self)
-        data["run_timestamp"] = self.run_timestamp.isoformat()
-        # Convert Enum to string for JSON serialization
-        for result in data["results"]:
-            result["status"] = result["status"].value
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(data, indent=2))
-        log.info("Test run summary written to %s", path)
 
 
 # TODO: When we update click to >= 8.2.0 we will be able to use the builtin `deprecated` argument for Option
