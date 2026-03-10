@@ -27,7 +27,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum, StrEnum, auto
 from pathlib import Path
-from types import MappingProxyType
 
 from .accessories import AppsRegister
 from .runner import LogPipe, Runner, SubprocessInfo, SubprocessKind
@@ -247,7 +246,7 @@ class KnownSubprocessEntry:
     target_name: str | None = None
 
 
-BUILTIN_SUBPROC_DATA = MappingProxyType({
+BUILTIN_SUBPROC_DATA = {
     # Matter applications
     'all-clusters': KnownSubprocessEntry(kind=SubprocessKind.APP, target_name='chip-all-clusters-app'),
     'all-devices': KnownSubprocessEntry(kind=SubprocessKind.APP, target_name='all-devices-app'),
@@ -283,7 +282,7 @@ BUILTIN_SUBPROC_DATA = MappingProxyType({
 
     # No target_name as this is either chiptool.py or darwinframework.py depending on the selected TestRunTime
     'chip-tool-with-python': KnownSubprocessEntry(kind=SubprocessKind.TOOL)
-})
+}
 
 
 class PathsFinderProto(typing.Protocol):
@@ -296,11 +295,11 @@ class SubprocessInfoRepo(dict):
     # don't want to create a dependency on the diskcache module which PathsFinder imports.
     # Instead we just want a dict-like object
     def __init__(self, paths: PathsFinderProto,
-                 subproc_knowhow: MappingProxyType[str, KnownSubprocessEntry] = BUILTIN_SUBPROC_DATA,
+                 subproc_knowhow: dict[str, KnownSubprocessEntry] | None = None,
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.paths = paths
-        self.subproc_knowhow = subproc_knowhow
+        self.subproc_knowhow = subproc_knowhow if subproc_knowhow is not None else BUILTIN_SUBPROC_DATA.copy()
 
     def addSpec(self, spec: str, kind: SubprocessKind | None = None):
         """Add a path to the repo as specified on the command line"""

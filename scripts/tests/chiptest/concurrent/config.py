@@ -1,0 +1,55 @@
+import dataclasses
+import enum
+import logging
+import tempfile
+from pathlib import Path
+from typing import ClassVar
+
+from chiptest.log_utils import LogConfig
+from chiptest.mp_utils.config import ProcessConfigTemplate
+from chiptest.test_definition import SubprocessInfoRepo, TestRunTime
+
+log = logging.getLogger(__name__)
+
+
+class TestSchedulerType(enum.StrEnum):
+    FAST = enum.auto()
+    REPRODUCIBLE = enum.auto()
+
+
+@dataclasses.dataclass
+class TestJobConfig:
+    """Worker configuration which is a subset of command line options."""
+    wifi_required: bool
+    thread_required: bool
+    commissioning_method: str
+    concurrency: int
+    concurrency_status: float
+    concurrency_scheduler: TestSchedulerType
+    dry_run: bool
+    subproc_info_repo: SubprocessInfoRepo
+    pics_file: Path
+    runtime: TestRunTime
+    test_timeout_seconds: int | None
+    iterations: int
+    keep_going: bool
+    expected_failures: int
+    summary_file: Path | None
+
+
+@dataclasses.dataclass
+class WorkerConfig(ProcessConfigTemplate, TestJobConfig):
+    WORKER_START_TIMEOUT: ClassVar[float] = 15
+    WORKER_STOP_TIMEOUT: ClassVar[float] = 10
+
+    tmp_dir_default: ClassVar[Path] = Path(tempfile.gettempdir())
+    tmp_dir_worker_base: ClassVar[Path] = Path(tempfile.gettempdir()) / "matter_test_suite"
+
+    @classmethod
+    def from_test_job_config(cls, log_config: LogConfig, config: TestJobConfig):
+        # Needs to be a shallow copy, so that we don't accidentally create unpicklable generators in the config.
+        return cls(**{field.name: getattr(config, field.name) for field in dataclasses.fields(config)},
+                   name=f"W{{id:0{len(str(config.concurrency))}}}",
+                   log_config=log_config,
+                   start_timeout=WorkerConfig.WORKER_START_TIMEOUT,
+                   stop_timeout=WorkerConfig.WORKER_STOP_TIMEOUT)
