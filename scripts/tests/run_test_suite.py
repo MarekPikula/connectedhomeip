@@ -31,18 +31,14 @@ from typing import Any, Protocol
 
 import chiptest
 import click
-import python_path
 from chiptest.concurrent.config import TestJobConfig, TestSchedulerType
 from chiptest.concurrent.pool import TestPool
 from chiptest.concurrent.worker import WorkerError
 from chiptest.glob_matcher import GlobMatcher
 from chiptest.log_utils import LOG_LEVELS, LogConfig
+from chiptest.runner import SubprocessKind
 from chiptest.test_definition import SubprocessInfoRepo, TestDefinition, TestRunTime, TestTag
 from chipyaml.paths_finder import PathsFinder
-
-with python_path.PythonPath('../../../src/python_testing/matter_testing_infrastructure', relative_to=__file__):
-    # Import all symbols used downstream not only those we use ourselves
-    from matter.testing.tasks import SubprocessKind  # noqa: F401
 
 log = logging.getLogger(__name__)
 
@@ -480,13 +476,14 @@ class Terminable(Protocol):
 @click.pass_context
 def cmd_run(context: click.Context, dry_run: bool, iterations: int, app_path: list[str], tool_path: list[str], discover_paths: bool,
             help_paths: bool, pics_file: Path, keep_going: bool, test_timeout_seconds: int | None, expected_failures: int,
-            commissioning_method: str, concurrency: int, concurrency_status: float, concurrency_mode: TestSchedulerType,
+            commissioning_method: str, summary_file: Path | None, concurrency: int, concurrency_status: float,
+            concurrency_mode: TestSchedulerType,
             # Deprecated CLI flags
             all_clusters_app: Path | None, lock_app: Path | None, ota_provider_app: Path | None, ota_requestor_app: Path | None,
             fabric_bridge_app: Path | None, tv_app: Path | None, bridge_app: Path | None, lit_icd_app: Path | None,
             microwave_oven_app: Path | None, rvc_app: Path | None, network_manager_app: Path | None, energy_gateway_app: Path | None,
             water_heater_app: Path | None, evse_app: Path | None, closure_app: Path | None, matter_repl_yaml_tester: Path | None,
-            chip_tool_with_python: Path | None, summary_file: Path | None) -> None:
+            chip_tool_with_python: Path | None) -> None:
     assert isinstance(context.obj, RunContext)
 
     if expected_failures != 0 and not keep_going:

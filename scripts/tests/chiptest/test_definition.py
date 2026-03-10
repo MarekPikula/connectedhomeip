@@ -295,11 +295,11 @@ class SubprocessInfoRepo(dict):
     # don't want to create a dependency on the diskcache module which PathsFinder imports.
     # Instead we just want a dict-like object
     def __init__(self, paths: PathsFinderProto,
-                 subproc_knowhow: dict[str, KnownSubprocessEntry] = BUILTIN_SUBPROC_DATA,
+                 subproc_knowhow: dict[str, KnownSubprocessEntry] | None = None,
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.paths = paths
-        self.subproc_knowhow = subproc_knowhow
+        self.subproc_knowhow = subproc_knowhow if subproc_knowhow is not None else BUILTIN_SUBPROC_DATA
 
     def addSpec(self, spec: str, kind: SubprocessKind | None = None):
         """Add a path to the repo as specified on the command line"""
@@ -496,7 +496,7 @@ class TestDefinition:
                             target.command, self.name)
             if not dry_run:
                 for key, subproc in subproc_info_repo.items():
-                    # Do not add controller tools to the register
+                    # Do not add tools to the register
                     if subproc.kind == SubprocessKind.TOOL:
                         continue
 

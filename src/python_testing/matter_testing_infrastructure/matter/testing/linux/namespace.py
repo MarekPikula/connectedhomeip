@@ -123,6 +123,7 @@ class NetworkResource:
 
         log.debug("Executing: '%s' check=%s", shlex.join(cmd), check)
         try:
+            # TODO: Redirect stdout/stderr to logging.
             subprocess.run(cmd, check=check)
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Failed to execute '{shlex.join(cmd)}'. Are you using --privileged if running in docker?") from e
@@ -333,7 +334,7 @@ class IsolatedNetworkNamespace:
         for obj in (
             self.bridge,
             self.app_link, self.tool_link, self.mgmt_link,
-            self.app_ns, self.tool_ns
+            self.app_ns, self.tool_ns, self.mgmt_ns
         ):
             try:
                 obj.teardown()

@@ -30,7 +30,8 @@ from xmlrpc.server import SimpleXMLRPCServer
 
 from chiptest.log_utils import LogConfig
 from chiptest.mp_utils.common import StartStopContextMixin, mp_wrapped_spawn_context
-from chiptest.mp_utils.process import ProcessConfigTemplate, WrappedProcess
+from chiptest.mp_utils.config import ProcessConfigTemplate
+from chiptest.mp_utils.process import WrappedProcess
 from chiptest.mp_utils.queue import WorkQueue, WorkQueueCancelled
 
 if TYPE_CHECKING:
@@ -100,10 +101,8 @@ class XmlRpcServerProcessManager(threading.Thread):
     def __init__(self, apps: AppsRegister) -> None:
         super().__init__(name="XmlRpcProcManager")
 
-        # From docs: Manager processes will be shutdown as soon as they are garbage collected or their parent process exits.
-        self._mp_manager = multiprocessing.Manager()
-
         self._apps = apps
+        self._mp_manager = multiprocessing.Manager()
         self._work_queue = WorkQueue[XmlRpcFuncCallT, XmlRpcFuncRetT](self._mp_manager)
 
         self._init_done = threading.Event()
@@ -119,17 +118,19 @@ class XmlRpcServerProcessManager(threading.Thread):
         if self._exception is not None:
             raise RuntimeError(f"XMLRPC Manager initialization failed with {self._exception!r}")
 
-    def cancel(self) -> None:
+    def cancel(self, timeout: float | None = ProcessConfigTemplate.DEFAULT_STOP_TIMEOUT) -> None:
         # We can cancel both request and response queues.
         self._work_queue.req_cancel()
         self._work_queue.rsp_close()
 
-        self.join(timeout=ProcessConfigTemplate.DEFAULT_STOP_TIMEOUT)
+        self.join(timeout=timeout)
         if self.is_alive():
             raise TimeoutError("XMLRPC Manager failed to stop within timeout")
 
         if self._exception is not None:
             raise RuntimeError(f"XMLRPC Manager failed with {self._exception!r}")
+
+        self._mp_manager.shutdown()
 
     def _execute_func(self, request: XmlRpcFuncCallT) -> XmlRpcFuncRetT | Exception:
         try:
@@ -201,9 +202,12 @@ class AppsRegister:
         self.net_ns_wrapper = net_ns_wrapper
         self.log_config = log_config if log_config is not None else LogConfig()
 
-        self._server = XmlRpcServerProcessManager(self)
+        self._server: XmlRpcServerProcessManager | None = None
 
     def init(self) -> None:
+        if self._server is None:
+            self._server = XmlRpcServerProcessManager(self)
+
         if self._server.is_alive():
             log.debug("XMLRPC server is already running")
             return
@@ -213,12 +217,13 @@ class AppsRegister:
         log.debug("XMLRPC Manager started")
 
     def uninit(self) -> None:
-        if not self._server.is_alive():
+        if self._server is None:
             log.debug("XMLRPC server is already down")
             return
 
         log.debug("Stopping XMLRPC Manager")
         self._server.cancel()
+        self._server = None
         log.debug("XMLRPC Manager stopped")
 
     def terminate(self):

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import ClassVar
 
 from chiptest.log_utils import LogConfig
-from chiptest.mp_utils.process import ProcessConfigTemplate
+from chiptest.mp_utils.config import ProcessConfigTemplate
 from chiptest.test_definition import SubprocessInfoRepo, TestRunTime
 
 log = logging.getLogger(__name__)

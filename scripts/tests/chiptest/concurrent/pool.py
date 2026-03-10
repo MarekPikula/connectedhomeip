@@ -9,7 +9,7 @@ from typing import Literal
 from chiptest.concurrent.config import TestJobConfig, TestSchedulerType, WorkerConfig
 from chiptest.concurrent.results import ResultProcessingThread
 from chiptest.concurrent.status import PeriodicStatusThread
-from chiptest.concurrent.worker import WorkerError, WorkerJob, WorkerProcessCls, WorkerResult
+from chiptest.concurrent.worker import WorkerJob, WorkerProcessCls, WorkerResult
 from chiptest.log_utils import LogConfig
 from chiptest.mp_utils.common import StartStopContextMixin, mp_wrapped_spawn_context
 from chiptest.mp_utils.pool import WrappedProcessPool
