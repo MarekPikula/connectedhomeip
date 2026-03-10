@@ -42,7 +42,7 @@ class StartStopContextMixin(ABC):
         self.stop()
         return False
 
-# TODO: Move it to a separate file.
+
 @contextmanager
 def mp_wrapped_spawn_context(wrapper_linux: str | None) -> Iterator[SpawnContext]:
     """Create platform-specific multiprocessing context.
@@ -50,6 +50,8 @@ def mp_wrapped_spawn_context(wrapper_linux: str | None) -> Iterator[SpawnContext
     Linux:
     - We need to use spawn for the pool to have separate environment variables per runner, and to be able to use a wrapper script.
     - We need unshare wrapper script to have an option to mount per-worker /tmp (initialized per-worker).
+
+    # TODO: Move it to a separate file.
     """
     source_context = multiprocessing.get_context("spawn")
 

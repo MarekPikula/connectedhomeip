@@ -13,6 +13,7 @@ from chiptest.mp_utils.queue import CancellableQueue
 
 log = logging.getLogger(__name__)
 
+
 class ProcessGroupState:
     def __init__(self, mp_manager: SyncManager) -> None:
         self._state_changed = mp_manager.Condition()

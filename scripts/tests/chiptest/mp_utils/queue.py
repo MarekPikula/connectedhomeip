@@ -118,7 +118,6 @@ class CancellableQueue(Generic[QueueElementT]):
         return self._cond.__exit__(exc_type, exc_val, exc_tb)
 
 
-
 WorkRequestT = TypeVar("WorkRequestT")
 WorkResponseT = TypeVar("WorkResponseT")
 

@@ -19,6 +19,7 @@ ConfigT = TypeVar("ConfigT", bound=ProcessConfigTemplate)
 WorkRequestT = TypeVar("WorkRequestT")
 WorkResponseT = TypeVar("WorkResponseT")
 
+
 class WrappedProcessPool(ABC, Generic[WrappedProcessT, ConfigT, WorkRequestT, WorkResponseT]):
     def __init__(self, process_cls: type[WrappedProcessT], mp_context: SpawnContext, mp_manager: SyncManager, concurrency: int,
                  name: str, config_template: ConfigT) -> None:

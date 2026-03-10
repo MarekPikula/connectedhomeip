@@ -37,6 +37,7 @@ ConfigT = TypeVar("ConfigT", bound=ProcessConfigTemplate)
 WorkRequestT = TypeVar("WorkRequestT")
 WorkResponseT = TypeVar("WorkResponseT")
 
+
 class WrappedProcess(ABC, Generic[ConfigT, WorkRequestT, WorkResponseT]):
     # Methods run in the parent process.
 

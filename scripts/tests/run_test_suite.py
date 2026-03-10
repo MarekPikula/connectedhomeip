@@ -73,8 +73,9 @@ class RunContext:
     # Deprecated options passed to `cmd_run`
     deprecated_chip_tool_path: Path | None = None
 
-# TODO: Move to the proper place
+
 class TestStatus(enum.Enum):
+    # TODO: Move to the proper place
     PASSED = "passed"
     FAILED = "failed"
     DRY_RUN = "dry_run"

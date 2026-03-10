@@ -19,7 +19,7 @@ class ProcessConfigTemplate:
     termination_timeout: float = DEFAULT_TERMINATION_TIMEOUT
 
     def with_formatted_name(self, id: int = 0) -> Self:
-        name=self.name.format(id=id)
+        name = self.name.format(id=id)
 
         # Indicate process hierarchy in the name so that it's easier to understand the dependencies in the logs.
         if (parent_proc_name := multiprocessing.current_process().name) != "MainProcess":

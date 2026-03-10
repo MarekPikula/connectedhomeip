@@ -16,6 +16,7 @@ class TestSchedulerType(enum.StrEnum):
     FAST = enum.auto()
     REPRODUCIBLE = enum.auto()
 
+
 @dataclasses.dataclass
 class TestJobConfig:
     """Worker configuration which is a subset of command line options."""
