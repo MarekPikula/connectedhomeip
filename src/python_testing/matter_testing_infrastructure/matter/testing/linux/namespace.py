@@ -46,10 +46,6 @@ def ensure_namespace_availability():
 def ensure_private_state():
     log.info("Ensuring /run is privately accessible")
 
-    # log.debug("Making / private")
-    # if subprocess.run(["mount", "--make-private", "/"]).returncode != 0:
-    #     raise RuntimeError("Failed to make / private. Are you using --privileged if running in docker?")
-
     log.debug("Remounting /run")
     if subprocess.run(["mount", "-t", "tmpfs", "tmpfs", "/run"]).returncode != 0:
         raise RuntimeError("Failed to mount /run as a temporary filesystem. Are you using --privileged if running in docker?")
