@@ -110,7 +110,7 @@ not_automated:
     - name: TestTimeSyncTrustedTimeSource.py
       reason:
           Unit test and shared code for
-          scripts/tests/TestTimeSyncTrustedTimeSourceRunner.py
+          src/python_testing/matter_testing_infrastructure/matter/testing/TestTimeSyncTrustedTimeSourceRunner.py
     - name: drlk_2_x_common.py
       reason: Shared code for TC_DRLK, not a standalone test
     - name: execute_python_tests.py

@@ -35,6 +35,8 @@ import click
 import coloredlogs
 import yaml
 
+from matter.testing import DEFAULT_CHIP_ROOT
+
 log = logging.getLogger(__name__)
 
 
@@ -183,13 +185,11 @@ def main():
     help="Name for the JUnit XML test suite (default: execute_python_tests script).",
 )
 def cmd_run(search_directory, env_file, keep_going, dry_run: bool, glob: list[str], regex: list[str], nightly: bool, summary_file: Path | None, junit_file: Path | None, junit_suite_name: str):
-    chip_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-
     load_env_from_yaml(env_file)
 
-    base_command = os.path.join(chip_root, "scripts/tests/run_python_test.py")
+    base_command = DEFAULT_CHIP_ROOT / "src/python_testing/matter_testing_infrastructure/matter/testing/run_python_test.py"
 
-    with open(os.path.join(chip_root, "src/python_testing/test_metadata.yaml")) as f:
+    with open(DEFAULT_CHIP_ROOT / "src/python_testing/test_metadata.yaml") as f:
         metadata = yaml.full_load(f)
     excluded_patterns = {item["name"] for item in metadata["not_automated"]}
     nightly_tests = {item["name"] for item in metadata["nightly"]}

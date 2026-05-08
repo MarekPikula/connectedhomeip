@@ -15,27 +15,24 @@
 #    limitations under the License.
 #
 
-import os
 import sys
 
 import matter.clusters as Clusters
+from matter.testing import DEFAULT_CHIP_ROOT
 from matter.testing.matter_testing import MatterBaseTest
 from matter.testing.runner import default_matter_test_main
 from matter.testing.spec_parsing import PrebuiltDataModelDirectory, build_xml_device_types
 
-DEFAULT_CHIP_ROOT = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-
 try:
     import matter_device_graph
 except ModuleNotFoundError:
-    sys.path.append(os.path.join(DEFAULT_CHIP_ROOT, 'src', 'tools', 'device-graph'))
+    sys.path.append(str(DEFAULT_CHIP_ROOT / 'src/tools/device-graph'))
     import matter_device_graph
 
 try:
     import TestMatterTestingSupport
 except ModuleNotFoundError:
-    sys.path.append(os.path.join(DEFAULT_CHIP_ROOT, 'src', 'python_testing', 'test_testing'))
+    sys.path.append(str(DEFAULT_CHIP_ROOT / 'src/python_testing/test_testing'))
     import TestMatterTestingSupport
 
 

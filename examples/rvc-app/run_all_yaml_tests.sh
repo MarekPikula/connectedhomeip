@@ -16,11 +16,11 @@ if [ -z "$NODEID" ]; then
 fi
 
 # RVC Clean Mode cluster
-./scripts/tests/chipyaml/chiptool.py tests Test_TC_RVCCLEANM_1_1 --PICS "$RVC_DEVICE_PICS" --nodeId "$NODEID" --endpoint "$RVC_DEVICE_ENDPOINT" &&
+./src/python_testing/matter_testing_infrastructure/matter/testing/chipyaml/chiptool.py tests Test_TC_RVCCLEANM_1_1 --PICS "$RVC_DEVICE_PICS" --nodeId "$NODEID" --endpoint "$RVC_DEVICE_ENDPOINT" &&
 
-    # RVC Operational State cluster
-    ./scripts/tests/chipyaml/chiptool.py tests Test_TC_RVCOPSTATE_1_1 --PICS "$RVC_DEVICE_PICS" --nodeId "$NODEID" --endpoint "$RVC_DEVICE_ENDPOINT" &&
+# RVC Operational State cluster
+./src/python_testing/matter_testing_infrastructure/matter/testing/chipyaml/chiptool.py tests Test_TC_RVCOPSTATE_1_1 --PICS "$RVC_DEVICE_PICS" --nodeId "$NODEID" --endpoint "$RVC_DEVICE_ENDPOINT" &&
 
-    # RVC Run Mode cluster
-    ./scripts/tests/chipyaml/chiptool.py tests Test_TC_RVCRUNM_1_1 --PICS "$RVC_DEVICE_PICS" --nodeId "$NODEID" --endpoint "$RVC_DEVICE_ENDPOINT" &&
-    echo done
+# RVC Run Mode cluster
+./src/python_testing/matter_testing_infrastructure/matter/testing/chipyaml/chiptool.py tests Test_TC_RVCRUNM_1_1 --PICS "$RVC_DEVICE_PICS" --nodeId "$NODEID" --endpoint "$RVC_DEVICE_ENDPOINT" &&
+echo done
