@@ -29,9 +29,26 @@ template("matter_python_wheel_action") {
 
   _py_manifest_file = "${target_gen_dir}/${target_name}.py_manifest.json"
 
+  _wheel_deps = []
+  if (defined(invoker.wheel_deps)) {
+    _wheel_deps = invoker.wheel_deps
+  }
+
+  # Auto-derive wheel dependencies from runtime data deps.
+  # Example: :matter-core -> :matter-core.wheel
+  if (defined(invoker.data_deps)) {
+    foreach(_data_dep, invoker.data_deps) {
+      _wheel_deps += [ "${_data_dep}.wheel" ]
+    }
+  }
+
   pw_python_action(target_name) {
     script = "build-matter-wheel.py"
     forward_variables_from(invoker, "*")
+
+    metadata = {
+      pw_python_package_wheels = [ _dist_dir ]
+    }
 
     _py_manifest_files_rebased = []
     foreach(_manifest_entry, py_manifest_files) {
@@ -84,5 +101,10 @@ template("matter_python_wheel_action") {
     }
 
     outputs = [ "${_dist_dir}/$output_name" ]
+  }
+
+  group("$target_name.wheel") {
+    public_deps = [ ":${invoker.target_name}" ]
+    public_deps += _wheel_deps
   }
 }
