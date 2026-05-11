@@ -34,6 +34,7 @@ pw_python_package("matter-testing-module") {
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3",
       ]
+      install_requires = [ "matter-repl" ]
     }
   }
 
@@ -263,6 +264,7 @@ pw_python_distribution("matter-testing") {
     ":data_model_zip_1_5",
     ":data_model_zip_1_5_1",
     ":data_model_zip_1_6",
+    "//src/controller/python:matter-repl.wheel",
   ]
 
   extra_files = [
