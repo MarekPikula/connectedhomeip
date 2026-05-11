@@ -121,6 +121,7 @@ if (current_toolchain != "${dir_pw_toolchain}/default:default") {
     packages = [
       "//integrations/mobly:chip_mobly",
       "//examples/chef",
+      "//src/python_testing/matter_testing_infrastructure:matter-testing",
     ]
     editable = true
   }
