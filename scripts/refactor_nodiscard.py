@@ -24,8 +24,8 @@ The script will continue this cycle of building and patching until the build
 succeeds.
 
 Usage:
-    python3 scripts/tests/refactor_nodiscard.py
-    python3 scripts/tests/refactor_nodiscard.py --input-file /path/to/build_log.txt
+    python3 scripts/refactor_nodiscard.py
+    python3 scripts/refactor_nodiscard.py --input-file /path/to/build_log.txt
 """
 
 import os

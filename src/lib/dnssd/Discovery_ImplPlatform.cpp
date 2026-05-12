@@ -516,7 +516,8 @@ void DiscoveryImplPlatform::HandleDnssdPublish(void * context, const char * type
     if (CHIP_NO_ERROR == error)
     {
         // This message is used as a marker for when the application process has started.
-        // It is watched for by the YAML test toolkit. See: scripts/tests/chiptest/test_definition.py
+        // It is watched for by the YAML test toolkit. See:
+        // src/python_testing/matter_testing_infrastructure/matter/testing/chiptest/test_definition.py
         ChipLogProgress(Discovery, "mDNS service published: %s; instance name: %s", StringOrNullMarker(type),
                         StringOrNullMarker(instanceName));
     }

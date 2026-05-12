@@ -408,12 +408,12 @@ application, the KVS file will be in /tmp as chip_kvs
 
 ### Running in the CI
 
--   YAML tests added to the certification directory get run automatically
-    -   src/app/tests/suites/certification/
-    -   PICS file: src/app/tests/suites/certification/ci-pics-values
--   If you DON’T want to run a test in the CI
-    -   (ex under development), add it to \_GetInDevelopmentTests in
-        `scripts/tests/chiptest/__init__.py`
+- YAML tests added to the certification directory get run automatically
+    - src/app/tests/suites/certification/
+    - PICS file: src/app/tests/suites/certification/ci-pics-values
+- If you DON’T want to run a test in the CI
+    - (ex under development), add it to \_GetInDevelopmentTests in
+      `src/python_testing/matter_testing_infrastructure/matter/testing/chiptest/__init__.py`
 
 Please see [CI testing](./ci_testing.md) for more information about how to set
 up examples apps, PICS and PIXIT values for use in the CI.

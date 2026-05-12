@@ -56,36 +56,24 @@ import requests
 from mobly import asserts
 
 import matter.clusters as Clusters
+from matter.testing import DEFAULT_CHIP_ROOT
+from matter.testing.basic_composition import BasicCompositionTests
+from matter.testing.decorators import async_test_body
+from matter.testing.matter_stack_state import MatterStackState
+from matter.testing.matter_test_config import MatterTestConfig
+from matter.testing.matter_testing import MatterBaseTest
+from matter.testing.runner import run_tests_no_exit
 
 log = logging.getLogger(__name__)
 
-DEFAULT_CHIP_ROOT = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-
-try:
-    from matter.testing.basic_composition import BasicCompositionTests
-    from matter.testing.decorators import async_test_body
-    from matter.testing.matter_stack_state import MatterStackState
-    from matter.testing.matter_test_config import MatterTestConfig
-    from matter.testing.matter_testing import MatterBaseTest
-    from matter.testing.runner import run_tests_no_exit
-except ImportError:
-    sys.path.append(os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '..')))
-    from matter.testing.basic_composition import BasicCompositionTests
-    from matter.testing.decorators import async_test_body
-    from matter.testing.matter_stack_state import MatterStackState
-    from matter.testing.matter_test_config import MatterTestConfig
-    from matter.testing.runner import TestStep, run_tests_no_exit
 
 try:
     import fetch_paa_certs_from_dcl
 except ImportError:
-    sys.path.append(os.path.abspath(
-        os.path.join(DEFAULT_CHIP_ROOT, 'credentials')))
+    sys.path.append(str(DEFAULT_CHIP_ROOT / 'credentials'))
     import fetch_paa_certs_from_dcl
 
-sys.path.append(os.path.abspath(os.path.join(DEFAULT_CHIP_ROOT, 'src', 'python_testing')))
+sys.path.append(str(DEFAULT_CHIP_ROOT / 'src/python_testing'))
 
 
 @dataclass

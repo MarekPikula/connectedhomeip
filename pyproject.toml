@@ -29,6 +29,10 @@ exclude = [
 
 [tool.pyright]
 reportMissingTypeStubs = "warning"
+extraPaths = [
+    "./src/python_testing/matter_testing_infrastructure",
+    "./src/controller/python",
+]
 
 [tool.ruff.lint]
 select = [

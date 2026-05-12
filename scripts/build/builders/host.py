@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import glob
 import os
 import shlex
 from enum import Enum, auto
@@ -280,7 +281,7 @@ class HostApp(Enum):
             yield 'chip-ota-requestor-app'
             yield 'chip-ota-requestor-app.map'
         elif self == HostApp.PYTHON_BINDINGS:
-            yield 'controller/python'  # Directory containing WHL files
+            pass
         elif self == HostApp.EFR32_TEST_RUNNER:
             yield 'chip_pw_test_runner_wheels'
         elif self == HostApp.TV_CASTING:
@@ -628,7 +629,7 @@ class HostBuilder(GnBuilder):
         elif app == HostApp.PYTHON_BINDINGS:
             self.extra_gn_options.append('enable_rtti=false')
             self.extra_gn_options.append('chip_project_config_include_dirs=["//config/python"]')
-            self.build_command = 'matter-repl'
+            self.build_command = 'python_wheels'
 
         if self.app == HostApp.SIMULATED_APP1:
             self.extra_gn_options.append('chip_tests_zap_config="app1"')
@@ -854,6 +855,13 @@ class HostBuilder(GnBuilder):
                 if not self.options.enable_link_map_file and name.endswith('.map'):
                     continue
                 yield BuilderOutput(os.path.join(self.output_dir, name), name)
+            return
+        if self.app == HostApp.PYTHON_BINDINGS:
+            pattern = 'obj/src/controller/python/*._build_wheel/*.whl'
+            if not (matches := sorted(glob.glob(os.path.join(self.output_dir, pattern)))):
+                raise FileNotFoundError(f'No python wheel matched {pattern} under {self.output_dir}')
+            for path in matches:
+                yield BuilderOutput(path, os.path.basename(path))
             return
         for name in self.app.OutputNames():
             if not self.options.enable_link_map_file and name.endswith(".map"):

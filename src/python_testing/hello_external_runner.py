@@ -16,7 +16,6 @@
 #    limitations under the License.
 #
 
-import os
 import signal
 import subprocess
 import sys
@@ -25,6 +24,7 @@ from multiprocessing.managers import BaseManager
 
 from hello_test import HelloTest
 
+from matter.testing import DEFAULT_CHIP_ROOT
 from matter.testing.matter_test_config import MatterTestConfig
 from matter.testing.runner import get_test_info, run_tests
 
@@ -34,8 +34,6 @@ except ImportError:
     class TestRunnerHooks:
         pass
 
-DEFAULT_CHIP_ROOT = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', '..'))
 
 MATTER_DEVELOPMENT_PAA_ROOT_CERTS = "credentials/development/paa-root-certs"
 
@@ -107,7 +105,7 @@ def run_in_process(test_name: str, config: MatterTestConfig) -> None:
 
 
 def commission() -> None:
-    paa_path = os.path.join(DEFAULT_CHIP_ROOT, MATTER_DEVELOPMENT_PAA_ROOT_CERTS)
+    paa_path = str(DEFAULT_CHIP_ROOT / MATTER_DEVELOPMENT_PAA_ROOT_CERTS)
     config = MatterTestConfig(commissioning_method="on-network", commission_only=True, discriminators=[3840], setup_passcodes=[
                               20202021], dut_node_ids=[0x12344321], paa_trust_store_path=paa_path, storage_path='admin_storage.json')
     run_in_process("commission", config)
@@ -133,8 +131,7 @@ def main():
     # Fire up an example app to test against
     # TODO: make factory reset and app path configurable, maybe the storage location too.
     subprocess.call("rm -rf /tmp/chip_* /tmp/repl* admin_storage.json", shell=True)
-    app_path = os.path.abspath(os.path.join(DEFAULT_CHIP_ROOT, 'out',
-                                            'linux-x64-all-clusters-ipv6only-no-ble-no-wifi-tsan-clang-test', 'chip-all-clusters-app'))
+    app_path = DEFAULT_CHIP_ROOT / 'out/linux-x64-all-clusters-ipv6only-no-ble-no-wifi-tsan-clang-test/chip-all-clusters-app'
     app_cmd = str(app_path)
     app_process = subprocess.Popen([app_cmd], stdout=sys.stdout, stderr=sys.stderr, bufsize=0)
 

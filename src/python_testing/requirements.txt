@@ -1,9 +1,18 @@
+alive_progress
+bluezoo>=1.0.2; sys_platform == "linux"
+click
+colorama
+coloredlogs
+diskcache
+ifaddr
+langcodes
 mobly
 pyasn1
 pyasn1_modules
-zeroconf
-ifaddr
-langcodes
-requests
 pycountry
+requests
+sdbus; sys_platform == "linux"
+tabulate
+types-PyYAML
 validators
+zeroconf
