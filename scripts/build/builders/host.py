@@ -280,7 +280,9 @@ class HostApp(Enum):
             yield 'chip-ota-requestor-app'
             yield 'chip-ota-requestor-app.map'
         elif self == HostApp.PYTHON_BINDINGS:
-            yield 'controller/python'  # Directory containing WHL files
+            yield 'python/obj/src/controller/python/matter-core._build_wheel'
+            yield 'python/obj/src/controller/python/matter-clusters._build_wheel'
+            yield 'python/obj/src/controller/python/matter-repl._build_wheel'
         elif self == HostApp.EFR32_TEST_RUNNER:
             yield 'chip_pw_test_runner_wheels'
         elif self == HostApp.TV_CASTING:
