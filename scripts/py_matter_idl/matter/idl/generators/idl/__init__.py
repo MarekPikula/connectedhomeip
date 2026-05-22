@@ -102,7 +102,7 @@ def human_text_string(value: StructTag | StructQuality | EventPriority | EventQu
             return "callback"
 
     # wrong value in general
-    return "Unknown/unsupported: %r" % value
+    return "Unknown/unsupported: {!r}".format(value)
 
 
 def event_access_string(e: Event) -> str:
