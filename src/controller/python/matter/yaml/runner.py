@@ -20,7 +20,7 @@ import queue
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum, IntEnum
-from typing import Any, Optional
+from typing import Any
 
 from matter.idl.generators.filters import to_pascal_case, to_snake_case
 from matter.yamltests.pseudo_clusters.pseudo_clusters import get_default_pseudo_clusters
@@ -836,8 +836,8 @@ class ReplTestRunner:
             LOGGER.warning(f"Failed to create default pseudo cluster: {e}")
             return None
 
-    def encode(self, request) -> Optional[BaseAction]:
-        action: Optional[BaseAction] = None
+    def encode(self, request) -> BaseAction | None:
+        action: BaseAction | None = None
         cluster = request.cluster.replace(' ', '').replace('/', '').replace('.', '')
         command = request.command
         if cluster == 'CommissionerCommands':

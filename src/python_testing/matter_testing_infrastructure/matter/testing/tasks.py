@@ -21,7 +21,7 @@ import sys
 import threading
 from dataclasses import dataclass, replace
 from enum import StrEnum
-from typing import BinaryIO, Optional
+from typing import BinaryIO
 from collections.abc import Callable
 
 LOGGER = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ LOGGER = logging.getLogger(__name__)
 
 def forward_f(f_in: BinaryIO,
               f_out: BinaryIO,
-              cb: Optional[Callable[[bytes, bool], bytes]] = None,
+              cb: Callable[[bytes, bool], bytes] | None = None,
               is_stderr: bool = False):
     """Forward f_in to f_out.
 
@@ -75,7 +75,7 @@ class Subprocess(threading.Thread):
     """Run a subprocess in a thread."""
 
     def __init__(self, program: str, *args,
-                 output_cb: Optional[Callable[[bytes, bool], bytes]] = None,
+                 output_cb: Callable[[bytes, bool], bytes] | None = None,
                  f_stdout: BinaryIO = sys.stdout.buffer,
                  f_stderr: BinaryIO = sys.stderr.buffer):
         """Initialize the subprocess.
@@ -97,7 +97,7 @@ class Subprocess(threading.Thread):
         self.output_cb = output_cb
         self.f_stdout = f_stdout
         self.f_stderr = f_stderr
-        self.output_match: Optional[re.Pattern] = None
+        self.output_match: re.Pattern | None = None
         self.returncode = None
 
     def set_output_match(self, pattern: str | re.Pattern):
@@ -162,8 +162,8 @@ class Subprocess(threading.Thread):
                 forwarding_stderr_thread.join()
 
     def start(self,
-              expected_output: Optional[str | re.Pattern] = None,
-              timeout: Optional[float] = None):
+              expected_output: str | re.Pattern | None = None,
+              timeout: float | None = None):
         """Start a subprocess and optionally wait for a specific output."""
 
         if expected_output is not None:
@@ -184,7 +184,7 @@ class Subprocess(threading.Thread):
             self.expected_output = None
 
     def send(self, message: str, end: str = "\n",
-             expected_output: Optional[str | re.Pattern] = None,
+             expected_output: str | re.Pattern | None = None,
              timeout: float = 300):
         """Send a message to a process and optionally wait for a response."""
 
@@ -205,7 +205,7 @@ class Subprocess(threading.Thread):
         self.p.terminate()
         self.join()
 
-    def wait(self, timeout: Optional[float] = None) -> Optional[int]:
+    def wait(self, timeout: float | None = None) -> int | None:
         """Wait for the subprocess to finish."""
         self.join(timeout)
         return self.returncode

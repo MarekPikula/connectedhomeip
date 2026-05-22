@@ -25,7 +25,7 @@ import sys
 import typing
 from dataclasses import dataclass
 from pprint import pformat, pprint
-from typing import Any, Optional
+from typing import Any
 
 from mobly import asserts
 
@@ -151,7 +151,7 @@ class BasicCompositionTests(MatterBaseTest):
     xml_clusters: dict[int, Any]
     xml_device_types: dict[int, Any]
 
-    def dump_wildcard(self, dump_device_composition_path: typing.Optional[str]) -> tuple[str, str]:
+    def dump_wildcard(self, dump_device_composition_path: str | None) -> tuple[str, str]:
         """ Dumps a json and a txt file of the attribute wildcard for this device if the dump_device_composition_path is supplied.
             Returns the json and txt as strings.
         """
@@ -183,7 +183,7 @@ class BasicCompositionTests(MatterBaseTest):
             log_test_start()
             return
 
-        dump_device_composition_path: Optional[str] = self.user_params.get("dump_device_composition_path", None)
+        dump_device_composition_path: str | None = self.user_params.get("dump_device_composition_path", None)
 
         node_id = self.dut_node_id
 
@@ -235,7 +235,7 @@ class BasicCompositionTests(MatterBaseTest):
             return "<unknown_test>"
         return frame.f_code.co_name
 
-    def fail_current_test(self, msg: Optional[str] = None) -> typing.NoReturn:  # type: ignore[misc]
+    def fail_current_test(self, msg: str | None = None) -> typing.NoReturn:  # type: ignore[misc]
         if not msg:
             # Without a message, just log the last problem seen
             asserts.fail(msg=self.problems[-1].problem)

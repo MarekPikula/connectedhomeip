@@ -19,7 +19,6 @@ import os
 import re
 import subprocess
 import threading
-from typing import Optional
 from re import Pattern
 
 from matter.testing.tasks import SubprocessKind
@@ -36,7 +35,7 @@ class ThreadBorderRouter:
 
     def __init__(self, dataset: str, ns: IsolatedNetworkNamespace):
         self._event = threading.Event()
-        self._pattern: Optional[Pattern[str]] = None
+        self._pattern: Pattern[str] | None = None
         self._event.set()
         self._netns_app = ns.netns_for_subprocess_kind(SubprocessKind.APP)
         self._link_name_app = ns.app_link.name

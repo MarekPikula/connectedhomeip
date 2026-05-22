@@ -21,7 +21,7 @@ Support module for IDM (Interaction Data Model) test modules containing shared f
 import copy
 import inspect
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from mobly import asserts
 
@@ -212,7 +212,7 @@ class IDMBaseTest(MatterBaseTest):
 
     async def find_timed_write_attribute(
         self, endpoints_data: dict[int, Any]
-    ) -> tuple[Optional[int], Optional[type[ClusterObjects.ClusterAttributeDescriptor]]]:
+    ) -> tuple[int | None, type[ClusterObjects.ClusterAttributeDescriptor] | None]:
         """
         Find an attribute that requires timed write on the actual device
         Uses the wildcard read data that's already in endpoints_data

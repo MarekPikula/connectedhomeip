@@ -18,7 +18,6 @@
 import ipaddress
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 from mobly import asserts
 
@@ -155,10 +154,10 @@ async def is_groupcast_on_root_node(test) -> bool:
 
 def generate_membership_entry_matcher(
     group_id: int,
-    key_set_id: Optional[int] = None,
-    has_auxiliary_acl: Optional[bool] = None,
-    endpoints: Optional[list] = None,
-    mcastAddrPolicy: Optional[Clusters.Groupcast.Enums.MulticastAddrPolicyEnum] = None,
+    key_set_id: int | None = None,
+    has_auxiliary_acl: bool | None = None,
+    endpoints: list | None = None,
+    mcastAddrPolicy: Clusters.Groupcast.Enums.MulticastAddrPolicyEnum | None = None,
     test_for_exists: bool = True,
 ) -> AttributeMatcher:
     """Create a matcher that checks if Membership attribute contains (or does not contain) an entry matching the specified criteria.
@@ -278,7 +277,7 @@ class OperateOnlyCommand:
     command_object: Clusters.ClusterObjects.ClusterCommand
 
 
-async def get_operate_only_commands(dev_ctrl: ChipDeviceController, node_id: int, exclude_ep0: bool = True, endpoint_id_to_search: Optional[int] = None) -> list[OperateOnlyCommand]:
+async def get_operate_only_commands(dev_ctrl: ChipDeviceController, node_id: int, exclude_ep0: bool = True, endpoint_id_to_search: int | None = None) -> list[OperateOnlyCommand]:
     """
     Reads all AcceptedCommandList attributes and the SpecificationVersion to determine all
     commands that only require Operate privilege.
