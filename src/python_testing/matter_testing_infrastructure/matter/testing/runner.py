@@ -28,7 +28,7 @@ import sys
 from binascii import unhexlify
 from dataclasses import asdict as dataclass_asdict
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from itertools import chain
 from pathlib import Path
 from typing import Any, Optional
@@ -468,7 +468,7 @@ def run_tests_no_exit(
                 hooks.start(count=1)
                 # Mobly gives the test run time in seconds, lets be a bit more
                 # precise
-                runner_start_time = datetime.now(timezone.utc)
+                runner_start_time = datetime.now(UTC)
 
             try:
                 runner.run()
@@ -485,8 +485,7 @@ def run_tests_no_exit(
                 ok = False
 
     if hooks:
-        duration = (datetime.now(timezone.utc) -
-                    runner_start_time) / timedelta(microseconds=1)
+        duration = (datetime.now(UTC) - runner_start_time) / timedelta(microseconds=1)
         hooks.stop(duration=duration)
 
     if not external_stack:
