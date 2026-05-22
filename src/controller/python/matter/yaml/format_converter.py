@@ -28,7 +28,7 @@ from .errors import ValidationError
 
 @dataclass
 class _TargetTypeInfo:
-    field: typing.Union[list[matter_idl_types.Field], matter_idl_types.Field]
+    field: list[matter_idl_types.Field] | matter_idl_types.Field
     is_fabric_scoped: bool
 
 
@@ -94,7 +94,7 @@ def from_data_model_to_test_definition(test_spec_definition, cluster_name, respo
     # looking for to give parity results to what chip-tool was getting (For TestCluster.yaml it
     # give value back of `0.100000`.
     if response_value_type == float32 and response_definition.data_type.name.lower() == 'single':
-        return float('%g' % response_value)
+        return float(f'{response_value:g}')
 
     target_type_info = _get_target_type_info(test_spec_definition, cluster_name,
                                              response_definition.data_type.name)

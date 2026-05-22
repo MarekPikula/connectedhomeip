@@ -99,7 +99,7 @@ class TizenBuilder(GnBuilder):
                  use_coverage: bool = False,
                  with_ui: bool = False,
                  ):
-        super(TizenBuilder, self).__init__(
+        super().__init__(
             root=os.path.join(root, app.value.source),
             runner=runner,
             output_dir_lock=output_dir_lock)
@@ -145,7 +145,7 @@ class TizenBuilder(GnBuilder):
 
     @lock_output_dir
     def generate(self):
-        super(TizenBuilder, self).generate()
+        super().generate()
         if self.app == TizenApp.TESTS and self.use_coverage:
             self.coverage_dir = os.path.join(self.output_dir, 'coverage')
             self._Execute(['mkdir', '-p', self.coverage_dir], title="Create coverage output location")
@@ -197,24 +197,21 @@ class TizenBuilder(GnBuilder):
         # Make sure that required ENV variables are defined
         env = 'TIZEN_SDK_ROOT'
         if env not in os.environ:
-            raise Exception(
-                "Environment %s missing, cannot build Tizen target" % env)
+            raise Exception(f"Environment {env} missing, cannot build Tizen target")
 
         sysroot = None
 
         if self.board.value.target_cpu == "arm64":
             env = 'TIZEN_SDK_SYSROOT_ARM64'
             if env not in os.environ:
-                raise Exception(
-                    "Environment %s missing, cannot build Tizen target" % env)
+                raise Exception(f"Environment {env} missing, cannot build Tizen target")
 
             sysroot = os.environ[env]
 
         elif self.board.value.target_cpu == "arm":
             env = 'TIZEN_SDK_SYSROOT'
             if env not in os.environ:
-                raise Exception(
-                    "Environment %s missing, cannot build Tizen target" % env)
+                raise Exception(f"Environment {env} missing, cannot build Tizen target")
 
             sysroot = os.environ[env]
 
@@ -225,9 +222,9 @@ class TizenBuilder(GnBuilder):
         args.extend(self.extra_gn_options)
         args.extend([
             'target_os="tizen"',
-            'target_cpu="%s"' % self.board.value.target_cpu,
-            'tizen_sdk_root="%s"' % os.environ['TIZEN_SDK_ROOT'],
-            'tizen_sdk_sysroot="%s"' % sysroot,
+            f'target_cpu="{self.board.value.target_cpu}"',
+            'tizen_sdk_root="{}"'.format(os.environ['TIZEN_SDK_ROOT']),
+            f'tizen_sdk_sysroot="{sysroot}"',
         ])
         return args
 

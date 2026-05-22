@@ -43,7 +43,8 @@ import logging
 import os
 import re
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any
+from collections.abc import Iterable
 
 from builders.builder import Builder, BuilderOptions, BuildProfile, OutDirLock
 from runner.runner import Runner
@@ -59,15 +60,15 @@ class TargetPart:
     name: str
 
     # The build arguments to apply to a builder if this part is active
-    build_arguments: Dict[str, Any]
+    build_arguments: dict[str, Any]
 
     # Part should be included if and only if the final string MATCHES the
     # given regular expression
-    only_if_re: Optional[re.Pattern] = None
+    only_if_re: re.Pattern | None = None
 
     # Part should be included if and only if the final string DOES NOT match
     # given regular expression
-    except_if_re: Optional[re.Pattern] = None
+    except_if_re: re.Pattern | None = None
 
     def __init__(self, name, **kargs):
         self.name = name.lower()
@@ -102,10 +103,10 @@ class TargetPart:
         """Converts a TargetPart into a dictionary
         """
 
-        result: Dict[str, str] = {}
+        result: dict[str, str] = {}
         result['name'] = self.name
 
-        build_arguments: Dict[str, str] = {}
+        build_arguments: dict[str, str] = {}
         for key, value in self.build_arguments.items():
             build_arguments[key] = str(value)
 
@@ -146,7 +147,7 @@ def _HasVariantPrefix(value: str, prefix: str):
     return None
 
 
-def _StringIntoParts(full_input: str, remaining_input: str, fixed_targets: List[List[TargetPart]], modifiers: List[TargetPart]):
+def _StringIntoParts(full_input: str, remaining_input: str, fixed_targets: list[list[TargetPart]], modifiers: list[TargetPart]):
     """Given an input string, process through all the input rules and return
        the underlying list of target parts for the input.
 
@@ -220,17 +221,17 @@ class BuildTarget:
         #   - esp32-devkitc-light is OK
         #   - esp32-light is NOT ok
         #   - esp32-m5stack is NOT ok
-        self.fixed_targets: List[List[TargetPart]] = []
+        self.fixed_targets: list[list[TargetPart]] = []
 
         # a list of all available modifiers for this build target
         # Modifiers can be combined in any way
-        self.modifiers: List[TargetPart] = []
+        self.modifiers: list[TargetPart] = []
 
-    def isUnifiedBuild(self, parts: List[TargetPart]):
+    def isUnifiedBuild(self, parts: list[TargetPart]):
         """Checks if the given parts combine into a unified build."""
         return any(part.build_arguments.get('unified', False) for part in parts)
 
-    def AppendFixedTargets(self, parts: List[TargetPart]):
+    def AppendFixedTargets(self, parts: list[TargetPart]):
         """Append a list of potential targets/variants.
 
         Example:
@@ -293,7 +294,7 @@ class BuildTarget:
 
         return result
 
-    def CompletionStrings(self, value: str) -> List[str]:
+    def CompletionStrings(self, value: str) -> list[str]:
         """Get a list of completion strings for this target."""
 
         if self.name.startswith(value):
@@ -462,7 +463,7 @@ class BuildTarget:
             kargs.update(part.build_arguments)
 
         if not quiet:
-            log.info("Preparing builder '%s'" % (name,))
+            log.info(f"Preparing builder '{name}'")
 
         builder = self.builder_class(repository_path, runner=runner, output_dir_lock=output_dir_lock, **kargs)
         builder.target = self

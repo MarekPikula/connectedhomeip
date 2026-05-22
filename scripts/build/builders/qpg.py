@@ -42,7 +42,7 @@ class QpgApp(Enum):
             return 'light-switch-app'
         if self == QpgApp.THERMOSTAT:
             return 'thermostat'
-        raise Exception('Unknown app type: %r' % self)
+        raise Exception(f'Unknown app type: {self!r}')
 
     def AppNamePrefix(self, board_name):
         if self == QpgApp.LIGHT:
@@ -57,7 +57,7 @@ class QpgApp(Enum):
             return f'chip-{board_name}-light-switch-example'
         if self == QpgApp.THERMOSTAT:
             return f'chip-{board_name}-thermostat-example'
-        raise Exception('Unknown app type: %r' % self)
+        raise Exception(f'Unknown app type: {self!r}')
 
     def FlashBundleName(self):
         if self == QpgApp.LIGHT:
@@ -72,7 +72,7 @@ class QpgApp(Enum):
             return 'light_switch_app.out.flashbundle.txt'
         if self == QpgApp.THERMOSTAT:
             return 'thermostat.out.flashbundle.txt'
-        raise Exception('Unknown app type: %r' % self)
+        raise Exception(f'Unknown app type: {self!r}')
 
     def BuildRoot(self, root):
         return os.path.join(root, 'examples', self.ExampleName(), 'qpg')
@@ -96,7 +96,7 @@ class QpgBuilder(GnBuilder):
                  board: QpgBoard = QpgBoard.QPG6200,
                  enable_rpcs: bool = False,
                  update_image: bool = False):
-        super(QpgBuilder, self).__init__(root=app.BuildRoot(root), runner=runner, output_dir_lock=output_dir_lock)
+        super().__init__(root=app.BuildRoot(root), runner=runner, output_dir_lock=output_dir_lock)
         self.app = app
         self.board = board
         self.enable_rpcs = enable_rpcs
@@ -104,7 +104,7 @@ class QpgBuilder(GnBuilder):
 
     def GnBuildArgs(self):
         args = super().GnBuildArgs()
-        args.append('qpg_target_ic=\"%s\"' % (self.board.QpgBoardName))
+        args.append(f'qpg_target_ic=\"{self.board.QpgBoardName}\"')
         if self.enable_rpcs:
             args.append('import("//with_pw_rpc.gni")')
         if self.update_image:

@@ -43,7 +43,7 @@ import random
 import string
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Set
+from typing import Any
 
 from mobly import asserts
 from TC_GC_common import get_feature_map, is_groupcast_on_root_node
@@ -135,8 +135,8 @@ class TC_RR_1_1(MatterBaseTest):
         endpoints_with_user_label_list = await dev_ctrl.ReadAttribute(self.dut_node_id, [Clusters.UserLabel.Attributes.LabelList])
         has_user_labels = len(endpoints_with_user_label_list) > 0
         if has_user_labels:
-            log.info("--> User label cluster present on endpoints %s" %
-                     ", ".join(["%d" % ep for ep in endpoints_with_user_label_list]))
+            log.info("--> User label cluster present on endpoints {}".format(
+                ", ".join([f"{ep}" for ep in endpoints_with_user_label_list])))
         else:
             log.info("--> User label cluster not present on any endpoitns")
 
@@ -226,7 +226,7 @@ class TC_RR_1_1(MatterBaseTest):
         # Step 1d - Ensure there are no leftover fabrics from another process.
         log.info("Step 1d: Remove all other fabrics other than the main one used for the test")
         if commissioned_fabric_count > 1:
-            fabrics: List[Clusters.OperationalCredentials.Structs.FabricDescriptorStruct] = await self.read_single_attribute(
+            fabrics: list[Clusters.OperationalCredentials.Structs.FabricDescriptorStruct] = await self.read_single_attribute(
                 dev_ctrl, node_id=self.dut_node_id, endpoint=0,
                 attribute=Clusters.OperationalCredentials.Attributes.Fabrics, fabricFiltered=False)
             for fabric in fabrics:
@@ -249,7 +249,7 @@ class TC_RR_1_1(MatterBaseTest):
         log.info("Step 1e: Commission into all remaining fabric entries.")
         for i in range(num_fabrics_to_commission - 1):
             admin_index = 2 + i
-            log.info("Commissioning fabric %d/%d" % (admin_index, num_fabrics_to_commission))
+            log.info(f"Commissioning fabric {admin_index}/{num_fabrics_to_commission}")
             new_certificate_authority = self.certificate_authority_manager.NewCertificateAuthority()
             new_fabric_admin = new_certificate_authority.NewFabricAdmin(vendorId=0xFFF1, fabricId=admin_index)
 
@@ -300,7 +300,7 @@ class TC_RR_1_1(MatterBaseTest):
         asserts.assert_equal(commissioned_fabric_count, num_fabrics_to_commission,
                              "Must have the right number of fabrics commissioned.")
         log.info("Reading fabric table")
-        fabric_table: List[Clusters.OperationalCredentials.Structs.FabricDescriptorStruct] = await self.read_single_attribute(
+        fabric_table: list[Clusters.OperationalCredentials.Structs.FabricDescriptorStruct] = await self.read_single_attribute(
             dev_ctrl, node_id=self.dut_node_id,
             endpoint=0, attribute=Clusters.OperationalCredentials.Attributes.Fabrics, fabricFiltered=False)
 
@@ -335,9 +335,8 @@ class TC_RR_1_1(MatterBaseTest):
             client = client_by_name[client_name]
 
             # Send the UpdateLabel command
-            label = (("%d." % fabric.fabricIndex) * 16)[:32]
-            log.info("Step 2a: Setting fabric label on fabric %d to '%s' using client %s" %
-                     (fabric.fabricIndex, label, client_name))
+            label = ((f"{fabric.fabricIndex}.") * 16)[:32]
+            log.info(f"Step 2a: Setting fabric label on fabric {fabric.fabricIndex} to '{label}' using client {client_name}")
             await client.SendCommand(self.dut_node_id, 0, Clusters.OperationalCredentials.Commands.UpdateFabricLabel(label))
 
             # Read back
@@ -374,9 +373,9 @@ class TC_RR_1_1(MatterBaseTest):
             Clusters.Descriptor  # All descriptors on all endpoints
         ]
 
-        log.info("Step 4 and 5 (first part): Establish subscription with all %d clients" % len(client_list))
+        log.info(f"Step 4 and 5 (first part): Establish subscription with all {len(client_list)} clients")
         for sub_idx, client in enumerate(client_list):
-            log.info("Establishing subscription %d/%d from controller node %s" % (sub_idx + 1, len(client_list), client.name))
+            log.info(f"Establishing subscription {sub_idx + 1}/{len(client_list)} from controller node {client.name}")
 
             sub = await client.ReadAttribute(
                 nodeId=self.dut_node_id,
@@ -420,7 +419,7 @@ class TC_RR_1_1(MatterBaseTest):
         asserts.assert_true(Clusters.BasicInformation in basic_info[0], "Must have read Basic Information cluster data")
         for attribute in large_read_contents:
             asserts.assert_true(attribute in basic_info[0][Clusters.BasicInformation],
-                                "Must have read back attribute %s" % (attribute.__name__))
+                                f"Must have read back attribute {attribute.__name__}")
 
         # Step 7: Trigger a change on NodeLabel
         log.info(
@@ -444,7 +443,7 @@ class TC_RR_1_1(MatterBaseTest):
                 # Record arrival of an expected subscription change when seen
                 if endpoint == 0 and attribute == Clusters.BasicInformation.Attributes.NodeLabel and value == AFTER_LABEL:
                     if not all_changes[client_name]:
-                        log.info("Got expected attribute change for client %s" % client_name)
+                        log.info(f"Got expected attribute change for client {client_name}")
                         all_changes[client_name] = True
 
                 # We are done waiting when we have accumulated all results
@@ -463,15 +462,15 @@ class TC_RR_1_1(MatterBaseTest):
 
         for catcher in resub_catchers:
             if catcher.caught_resubscription:
-                log.error("Client %s saw a resubscription" % catcher.name)
+                log.error(f"Client {catcher.name} saw a resubscription")
                 sub_test_failed = True
             else:
-                log.info("Client %s correctly did not see a resubscription" % catcher.name)
+                log.info(f"Client {catcher.name} correctly did not see a resubscription")
 
         all_reports_gotten = all(all_changes.values())
         if not all_reports_gotten:
-            log.error("Missing reports from the following clients: %s" %
-                      ", ".join([name for name, value in all_changes.items() if value is False]))
+            log.error("Missing reports from the following clients: {}".format(
+                ", ".join([name for name, value in all_changes.items() if value is False])))
             sub_test_failed = True
         else:
             log.info("Got successful reports from all clients, meaning all concurrent CASE sessions worked")
@@ -483,7 +482,7 @@ class TC_RR_1_1(MatterBaseTest):
         # Step 8: Validate sessions have not changed by doing a read on NodeLabel from all clients
         log.info("Step 8a: Read back NodeLabel directly from all clients")
         for sub_idx, client in enumerate(client_list):
-            log.info("Reading NodeLabel (%d/%d) from controller node %s" % (sub_idx + 1, len(client_list), client.name))
+            log.info(f"Reading NodeLabel ({sub_idx + 1}/{len(client_list)}) from controller node {client.name}")
 
             label_readback = await self.read_single_attribute(client,
                                                               node_id=self.dut_node_id,
@@ -534,7 +533,7 @@ class TC_RR_1_1(MatterBaseTest):
             log.info("Step 11: Groupcast cluster is enabled on RootNode, skipping legacy Groups steps 11-15")
         else:
             log.info("Step 11: Validating groups support minimums")
-            groups_cluster_endpoints: Dict[int, Any] = await dev_ctrl.ReadAttribute(self.dut_node_id, [Clusters.Groups])
+            groups_cluster_endpoints: dict[int, Any] = await dev_ctrl.ReadAttribute(self.dut_node_id, [Clusters.Groups])
             counted_groups_clusters = len(groups_cluster_endpoints)
 
         # The test for Step 11 and all of Steps 12 to 15 are only performed if Groups cluster instances are found
@@ -560,20 +559,20 @@ class TC_RR_1_1(MatterBaseTest):
                 asserts.fail("Failed Step 12: MaxGroupKeysPerFabric < 3")
 
             # Create a list of per-fabric clients to use for filling group resources accross all fabrics.
-            fabric_unique_clients: List[Any] = []
+            fabric_unique_clients: list[Any] = []
 
             for fabric in fabric_table:
                 client_name = generate_controller_name(fabric.fabricIndex, 0)
                 fabric_unique_clients.append(client_by_name[client_name])
 
             # Step 13: Write and verify indicated_max_group_keys_per_fabric group keys to all fabrics.
-            group_keys: List[List[
+            group_keys: list[list[
                 Clusters.GroupKeyManagement.Structs.GroupKeySetStruct]] = await self.fill_and_validate_group_key_sets(
                 num_fabrics_to_commission, fabric_unique_clients, indicated_max_group_keys_per_fabric)
 
             # Step 14: Write and verify indicated_max_groups_per_fabric group/key mappings for all fabrics.
             # First, Generate list of unique group/key mappings
-            group_key_map: List[Dict[int, int]] = [{} for _ in range(num_fabrics_to_commission)]
+            group_key_map: list[dict[int, int]] = [{} for _ in range(num_fabrics_to_commission)]
             for fabric_list_idx in range(num_fabrics_to_commission):
                 for group_idx in range(indicated_max_groups_per_fabric):
                     group_id: int = fabric_list_idx * indicated_max_groups_per_fabric + group_idx + 1
@@ -584,8 +583,8 @@ class TC_RR_1_1(MatterBaseTest):
                 num_fabrics_to_commission, fabric_unique_clients, group_key_map, fabric_table)
 
             # Step 15: Add all the groups to the discovered groups-supporting endpoints and verify GroupTable
-            group_table_written: List[
-                Dict[int, Clusters.GroupKeyManagement.Structs.GroupInfoMapStruct]] = await self.add_all_groups(
+            group_table_written: list[
+                dict[int, Clusters.GroupKeyManagement.Structs.GroupInfoMapStruct]] = await self.add_all_groups(
                 num_fabrics_to_commission, fabric_unique_clients, group_key_map,
                 groups_cluster_endpoints, indicated_max_groups_per_fabric, fabric_table)
             await self.validate_group_table(num_fabrics_to_commission, fabric_unique_clients, group_table_written, fabric_table)
@@ -601,15 +600,14 @@ class TC_RR_1_1(MatterBaseTest):
         if check_heap_watermarks:
             log.info("Read Heap info after stress test")
             high_watermark_after, current_usage_after = await self.read_heap_statistics(dev_ctrl)
-            log.info("=== Heap Usage Diagnostics ===\nHigh watermark: {} (before) / {} (after)\n"
-                     "Current usage: {} (before) / {} (after)".format(high_watermark_before, high_watermark_after,
-                                                                      current_usage_before, current_usage_after))
+            log.info(f"=== Heap Usage Diagnostics ===\nHigh watermark: {high_watermark_before} (before) / {high_watermark_after} (after)\n"
+                     f"Current usage: {current_usage_before} (before) / {current_usage_after} (after)")
 
     async def validate_groupcast_resources(
             self,
             dev_ctrl,
-            fabric_table: List[Clusters.OperationalCredentials.Structs.FabricDescriptorStruct],
-            client_by_name: Dict[str, Any],
+            fabric_table: list[Clusters.OperationalCredentials.Structs.FabricDescriptorStruct],
+            client_by_name: dict[str, Any],
             commissioned_fabrics: int):
         """Steps 16-21: Groupcast-specific resource validation."""
 
@@ -643,13 +641,13 @@ class TC_RR_1_1(MatterBaseTest):
 
         # Step 18: Write MaxGroupKeysPerFabric-1 key sets per fabric
         log.info("Step 18: Write group key sets per fabric")
-        fabric_unique_clients: List[Any] = []
+        fabric_unique_clients: list[Any] = []
         for fabric in fabric_table:
             client_name = generate_controller_name(fabric.fabricIndex, 0)
             fabric_unique_clients.append(client_by_name[client_name])
 
         keys_to_write = max_keys_per_fabric - 1
-        fabric_key_sets: List[List[int]] = [[] for _ in range(commissioned_fabrics)]
+        fabric_key_sets: list[list[int]] = [[] for _ in range(commissioned_fabrics)]
 
         for client_idx in range(commissioned_fabrics):
             client = fabric_unique_clients[client_idx]
@@ -675,7 +673,7 @@ class TC_RR_1_1(MatterBaseTest):
         # Step 19: JoinGroup across fabrics
         log.info("Step 19: JoinGroup across fabrics to fill MaxMembershipCount")
         next_group_id = 1
-        fabric_groups: List[List[int]] = [[] for _ in range(commissioned_fabrics)]
+        fabric_groups: list[list[int]] = [[] for _ in range(commissioned_fabrics)]
 
         # Fabric 1 (index 0) gets per_fabric_limit groups
         client = fabric_unique_clients[0]
@@ -778,12 +776,12 @@ class TC_RR_1_1(MatterBaseTest):
             clusters = user_labels[endpoint_id]
             for cluster in clusters:
                 if cluster == Clusters.UserLabel:
-                    log.info("Step 9a: Filling UserLabel cluster on endpoint %d" % endpoint_id)
+                    log.info(f"Step 9a: Filling UserLabel cluster on endpoint {endpoint_id}")
                     statuses = await dev_ctrl.WriteAttribute(target_node_id,
                                                              [(endpoint_id, Clusters.UserLabel.Attributes.LabelList(labels))])
                     asserts.assert_equal(statuses[0].Status, StatusEnum.Success, "Label write must succeed")
 
-                    log.info("Step 9b: Validate UserLabel cluster contents after write on endpoint %d" % endpoint_id)
+                    log.info(f"Step 9b: Validate UserLabel cluster contents after write on endpoint {endpoint_id}")
                     read_back_labels = await self.read_single_attribute(dev_ctrl,
                                                                         node_id=target_node_id,
                                                                         endpoint=endpoint_id,
@@ -794,11 +792,11 @@ class TC_RR_1_1(MatterBaseTest):
 
     async def fill_and_validate_group_key_sets(self,
                                                fabrics: int,
-                                               clients: List[Any],
-                                               keys_per_fabric: int) -> List[List[
+                                               clients: list[Any],
+                                               keys_per_fabric: int) -> list[list[
                                                    Clusters.GroupKeyManagement.Structs.GroupKeySetStruct]]:
         # Step 12: Write indicated_max_group_keys_per_fabric group keys to all fabrics.
-        group_keys: List[List[Clusters.GroupKeyManagement.Structs.GroupKeySetStruct]] = [[] for _ in range(fabrics)]
+        group_keys: list[list[Clusters.GroupKeyManagement.Structs.GroupKeySetStruct]] = [[] for _ in range(fabrics)]
         for client_idx in range(fabrics):
             client: Any = clients[client_idx]
 
@@ -806,7 +804,7 @@ class TC_RR_1_1(MatterBaseTest):
             for group_key_cluster_idx in range(1, keys_per_fabric):
                 group_key_list_idx: int = group_key_cluster_idx - 1
 
-                log.info("Step 13: Setting group key on fabric %d at index '%d'" % (client_idx+1, group_key_cluster_idx))
+                log.info(f"Step 13: Setting group key on fabric {client_idx+1} at index '{group_key_cluster_idx}'")
                 group_keys[client_idx].append(self.build_group_key(client_idx, group_key_cluster_idx, keys_per_fabric))
                 await client.SendCommand(self.dut_node_id, 0, Clusters.GroupKeyManagement.Commands.KeySetWrite(
                     group_keys[client_idx][group_key_list_idx]))
@@ -815,18 +813,17 @@ class TC_RR_1_1(MatterBaseTest):
         for client_idx in range(fabrics):
             client: Any = clients[client_idx]
 
-            log.info("Step 13: Reading back group keys on fabric %d" % (client_idx+1))
+            log.info(f"Step 13: Reading back group keys on fabric {client_idx+1}")
             resp = await client.SendCommand(self.dut_node_id, 0,
                                             Clusters.GroupKeyManagement.Commands.KeySetReadAllIndices(),
                                             responseType=Clusters.GroupKeyManagement.Commands.KeySetReadAllIndicesResponse)
 
-            read_group_key_ids: List[int] = resp.groupKeySetIDs
-            known_group_key_ids: List[int] = [key_set.groupKeySetID for key_set in group_keys[client_idx]]
-            ipk_group_key_id: Set[int] = set(read_group_key_ids) - set(known_group_key_ids)
+            read_group_key_ids: list[int] = resp.groupKeySetIDs
+            known_group_key_ids: list[int] = [key_set.groupKeySetID for key_set in group_keys[client_idx]]
+            ipk_group_key_id: set[int] = set(read_group_key_ids) - set(known_group_key_ids)
 
             asserts.assert_equal(keys_per_fabric, len(read_group_key_ids),
-                                 "KeySetReadAllIndicesResponse length does "
-                                 "not match the key support indicated: %d." % (keys_per_fabric))
+                                 f"KeySetReadAllIndicesResponse length does not match the key support indicated: {keys_per_fabric}.")
 
             asserts.assert_equal(len(ipk_group_key_id), 1,
                                  "Read more than 1 key ID that did not match written values after IPK (only expected 1 for IPK).")
@@ -835,12 +832,12 @@ class TC_RR_1_1(MatterBaseTest):
 
     async def fill_and_validate_group_key_map(self,
                                               fabrics: int,
-                                              clients: List[Any],
-                                              group_key_map: List[Dict[int, int]],
-                                              fabric_table: List[
+                                              clients: list[Any],
+                                              group_key_map: list[dict[int, int]],
+                                              fabric_table: list[
                                                   Clusters.OperationalCredentials.Structs.FabricDescriptorStruct]) -> None:
         # Step 14: Write and verify indicated_max_groups_per_fabric group/key mappings for all fabrics.
-        mapping_structs: List[List[Clusters.GroupKeyManagement.Structs.GroupKeyMapStruct]] = [[] for _ in range(fabrics)]
+        mapping_structs: list[list[Clusters.GroupKeyManagement.Structs.GroupKeyMapStruct]] = [[] for _ in range(fabrics)]
         for client_idx in range(fabrics):
             client: Any = clients[client_idx]
             fabric_idx: int = fabric_table[client_idx].fabricIndex
@@ -851,7 +848,7 @@ class TC_RR_1_1(MatterBaseTest):
                     groupKeySetID=group_key_map[client_idx][group],
                     fabricIndex=fabric_idx))
 
-            log.info("Step 14: Setting group key map on fabric %d" % (fabric_idx))
+            log.info(f"Step 14: Setting group key map on fabric {fabric_idx}")
             await client.WriteAttribute(
                 self.dut_node_id, [(0, Clusters.GroupKeyManagement.Attributes.GroupKeyMap(mapping_structs[client_idx]))])
 
@@ -860,7 +857,7 @@ class TC_RR_1_1(MatterBaseTest):
             client: Any = clients[client_idx]
             fabric_idx: int = fabric_table[client_idx].fabricIndex
 
-            log.info("Step 14: Reading group key map on fabric %d" % (fabric_idx))
+            log.info(f"Step 14: Reading group key map on fabric {fabric_idx}")
             group_key_map_readback = await self.read_single_attribute(
                 client, node_id=self.dut_node_id, endpoint=0, attribute=Clusters.GroupKeyManagement.Attributes.GroupKeyMap)
 
@@ -880,15 +877,15 @@ class TC_RR_1_1(MatterBaseTest):
 
     async def add_all_groups(self,
                              fabrics: int,
-                             clients: List[Any],
-                             group_key_map: List[Dict[int, int]],
-                             group_endpoints: Dict[int, Any],
+                             clients: list[Any],
+                             group_key_map: list[dict[int, int]],
+                             group_endpoints: dict[int, Any],
                              groups_per_fabric: int,
-                             fabric_table: List[
-                                 Clusters.OperationalCredentials.Structs.FabricDescriptorStruct]) -> List[
-            Dict[int, Clusters.GroupKeyManagement.Structs.GroupInfoMapStruct]]:
+                             fabric_table: list[
+                                 Clusters.OperationalCredentials.Structs.FabricDescriptorStruct]) -> list[
+            dict[int, Clusters.GroupKeyManagement.Structs.GroupInfoMapStruct]]:
         # Step 14: Add indicated_max_groups_per_fabric to each fabric through the Groups clusters on supporting endpoints.
-        written_group_table_map: List[Dict[int, Clusters.GroupKeyManagement.Structs.GroupInfoMapStruct]] = [
+        written_group_table_map: list[dict[int, Clusters.GroupKeyManagement.Structs.GroupInfoMapStruct]] = [
             {} for _ in range(fabrics)]
         for client_idx in range(fabrics):
             client: Any = clients[client_idx]
@@ -935,14 +932,14 @@ class TC_RR_1_1(MatterBaseTest):
 
     async def validate_group_table(self,
                                    fabrics: int,
-                                   clients: List[Any],
-                                   group_table_written: List[Dict[int, Clusters.GroupKeyManagement.Structs.GroupInfoMapStruct]],
-                                   fabric_table: List[Clusters.OperationalCredentials.Structs.FabricDescriptorStruct]) -> None:
+                                   clients: list[Any],
+                                   group_table_written: list[dict[int, Clusters.GroupKeyManagement.Structs.GroupInfoMapStruct]],
+                                   fabric_table: list[Clusters.OperationalCredentials.Structs.FabricDescriptorStruct]) -> None:
         for client_idx in range(fabrics):
             client: Any = clients[client_idx]
             fabric_idx: int = fabric_table[client_idx].fabricIndex
 
-            group_table_read: List[Clusters.GroupKeyManagement.Attributes.GroupTable] = await self.read_single_attribute(
+            group_table_read: list[Clusters.GroupKeyManagement.Attributes.GroupTable] = await self.read_single_attribute(
                 client, node_id=self.dut_node_id, endpoint=0, attribute=Clusters.GroupKeyManagement.Attributes.GroupTable)
 
             found_groups: int = 0
@@ -966,7 +963,7 @@ class TC_RR_1_1(MatterBaseTest):
                        test_step: int,
                        client_by_name,
                        enable_access_to_group_cluster: bool,
-                       fabric_table: List[
+                       fabric_table: list[
                            Clusters.OperationalCredentials.Structs.FabricDescriptorStruct]):
         for fabric in fabric_table:
             client_name = generate_controller_name(fabric.fabricIndex, 0)
@@ -1132,7 +1129,7 @@ class TC_RR_1_1(MatterBaseTest):
         asserts.assert_true(Clusters.SoftwareDiagnostics in swdiag_info[0], "Must have read Software Diagnostics cluster data")
         for attribute in diagnostics_contents:
             asserts.assert_true(attribute in swdiag_info[0][Clusters.SoftwareDiagnostics],
-                                "Must have read back attribute %s" % (attribute.__name__))
+                                f"Must have read back attribute {attribute.__name__}")
         high_watermark = swdiag_info[0][Clusters.SoftwareDiagnostics][
             Clusters.SoftwareDiagnostics.Attributes.CurrentHeapHighWatermark]
         current_usage = swdiag_info[0][Clusters.SoftwareDiagnostics][

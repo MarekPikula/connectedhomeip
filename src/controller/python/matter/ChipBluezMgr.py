@@ -22,7 +22,6 @@
 #      BLE Central support for Chip Device Manager via BlueZ APIs.
 #
 
-from __future__ import absolute_import, print_function
 
 import logging
 import queue
@@ -143,10 +142,7 @@ class BluezDbusAdapter:
             return
 
         if len(invalidated_properties) > 0:
-            LOGGER.debug(
-                "invalidated_properties is not empty %s" % str(
-                    invalidated_properties)
-            )
+            LOGGER.debug(f"invalidated_properties is not empty {str(invalidated_properties)}")
             return
 
         if interface == ADAPTER_INTERFACE:
@@ -353,10 +349,7 @@ class BluezDbusDevice:
             return
 
         if len(invalidated_properties) > 0:
-            LOGGER.debug(
-                "invalidated_properties is not empty %s" % str(
-                    invalidated_properties)
-            )
+            LOGGER.debug(f"invalidated_properties is not empty {str(invalidated_properties)}")
             return
 
         if interface == DEVICE_INTERFACE:
@@ -428,7 +421,7 @@ class BluezDbusDevice:
             uuid_result = []
             for i in uuids:
                 if len(str(i)) == 4:
-                    uuid_normal = "0000%s-0000-0000-0000-000000000000" % i
+                    uuid_normal = f"0000{i}-0000-0000-0000-000000000000"
                 else:
                     uuid_normal = i
                 uuid_result.append(uuid.UUID(str(uuid_normal)))
@@ -817,8 +810,7 @@ class BluezManager(ChipBleBase):
                 )
             ]
             for adapter in adapters:
-                LOGGER.info("AdapterName: %s   AdapterAddress: %s" % (
-                    adapter.path.replace("/org/bluez/", ""), adapter.Address))
+                LOGGER.info("AdapterName: {}   AdapterAddress: {}".format(adapter.path.replace("/org/bluez/", ""), adapter.Address))
         except dbus.exceptions.DBusException as ex:
             LOGGER.debug(str(ex))
 
@@ -835,12 +827,9 @@ class BluezManager(ChipBleBase):
             if len(adapters) > 0:
                 for adapter in adapters:
                     if (str(adapter.Address).upper() == str(identifier).upper() or
-                            "/org/bluez/{}".format(identifier) == str(adapter.path)):
+                            f"/org/bluez/{identifier}" == str(adapter.path)):
                         return adapter
-            LOGGER.info(
-                "adapter %s cannot be found, expect the ble mac address" % (
-                    identifier)
-            )
+            LOGGER.info(f"adapter {identifier} cannot be found, expect the ble mac address")
             return None
 
         except dbus.exceptions.DBusException as ex:
@@ -895,28 +884,22 @@ class BluezManager(ChipBleBase):
             self.orig_input_hook()
 
     def dump_scan_result(self, device):
-        LOGGER.info("{0:<16}= {1}".format("Name", device.Name))
-        LOGGER.info("{0:<16}= {1}".format("ID", device.device_id))
-        LOGGER.info("{0:<16}= {1}".format("RSSI", device.RSSI))
-        LOGGER.info("{0:<16}= {1}".format("Address", device.Address))
+        LOGGER.info("{:<16}= {}".format("Name", device.Name))
+        LOGGER.info("{:<16}= {}".format("ID", device.device_id))
+        LOGGER.info("{:<16}= {}".format("RSSI", device.RSSI))
+        LOGGER.info("{:<16}= {}".format("Address", device.Address))
 
         devIdInfo = self.get_peripheral_devIdInfo(device)
         if devIdInfo is not None:
-            LOGGER.info("{0:<16}= {1}".format(
-                "Pairing State", devIdInfo.pairingState))
-            LOGGER.info("{0:<16}= {1}".format(
-                "Discriminator", devIdInfo.discriminator))
-            LOGGER.info("{0:<16}= {1}".format(
-                "Vendor Id", devIdInfo.vendorId))
-            LOGGER.info("{0:<16}= {1}".format(
-                "Product Id", devIdInfo.productId))
+            LOGGER.info("{:<16}= {}".format("Pairing State", devIdInfo.pairingState))
+            LOGGER.info("{:<16}= {}".format("Discriminator", devIdInfo.discriminator))
+            LOGGER.info("{:<16}= {}".format("Vendor Id", devIdInfo.vendorId))
+            LOGGER.info("{:<16}= {}".format("Product Id", devIdInfo.productId))
 
         if device.ServiceData:
             for advuuid in device.ServiceData:
-                LOGGER.info("{0:<16}= {1}".format(
-                    "Adv UUID", str(advuuid)))
-                LOGGER.info("{0:<16}= {1}".format(
-                    "Adv Data", bytes(device.ServiceData[advuuid]).hex()))
+                LOGGER.info("{:<16}= {}".format("Adv UUID", str(advuuid)))
+                LOGGER.info("{:<16}= {}".format("Adv Data", bytes(device.ServiceData[advuuid]).hex()))
         else:
             LOGGER.info("")
         LOGGER.info("")

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding=utf-8
 
 #
 #   Copyright (c) 2020 Project CHIP Authors
@@ -25,7 +24,6 @@
 #
 
 
-from __future__ import absolute_import, print_function
 
 import struct
 from collections import OrderedDict
@@ -122,8 +120,7 @@ class uint(int):
 
     def __init__(self, val: int):
         if (val < 0):
-            raise TypeError(
-                'expecting positive value, got negative value of %d instead' % val)
+            raise TypeError(f'expecting positive value, got negative value of {val} instead')
 
 
 class float32(float):
@@ -137,7 +134,7 @@ class float32(float):
     pass
 
 
-class TLVWriter(object):
+class TLVWriter:
     def __init__(self, encoding=None, implicitProfile=None):
         self._encoding = encoding if encoding is not None else bytearray()
         self._implicitProfile = implicitProfile
@@ -446,7 +443,7 @@ class TLVWriter(object):
             raise ValueError("Invalid TLV container type")
 
 
-class TLVReader(object):
+class TLVReader:
     def __init__(self, tlv):
         self._tlv = tlv
         self._bytesRead = 0
@@ -648,7 +645,7 @@ class TLVReader(object):
             self._bytesRead += 8
         elif "UTF-8 String" in decoding["type"]:
             (val,) = struct.unpack(
-                "<%ds" % decoding["strDataLen"],
+                f"<{decoding['strDataLen']}s",
                 tlv[self._bytesRead: self._bytesRead + decoding["strDataLen"]],
             )
             try:
@@ -658,7 +655,7 @@ class TLVReader(object):
             self._bytesRead += decoding["strDataLen"]
         elif "Byte String" in decoding["type"]:
             (val,) = struct.unpack(
-                "<%ds" % decoding["strDataLen"],
+                f"<{decoding['strDataLen']}s",
                 tlv[self._bytesRead: self._bytesRead + decoding["strDataLen"]],
             )
 

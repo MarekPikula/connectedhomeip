@@ -50,7 +50,7 @@ def get_ncs_recommended_revision():
 
     # Read recommended revision saved in the .nrfconnect-recommended-revision file.
     try:
-        with open(os.path.join(chip_root, 'config/nrfconnect/.nrfconnect-recommended-revision'), 'r') as f:
+        with open(os.path.join(chip_root, 'config/nrfconnect/.nrfconnect-recommended-revision')) as f:
             return f.readline().strip()
     except OSError:
         raise RuntimeError(
@@ -78,7 +78,7 @@ def print_check_revision_warning_message(current_revision, recommended_revision)
         allowed_message), len(update_message), len(call_command_message)])
 
     # To keep right frame shape the space characters are added to messages shorter than the longest one.
-    fmt = "# {:<%s}#" % (longest_message_len)
+    fmt = f"# {{:<{longest_message_len}}}#"
 
     print_messages([
         (longest_message_len+3)*'#', fmt.format(current_revision_message),

@@ -15,12 +15,13 @@
 #
 """Nested dictionary utilities."""
 
-from typing import Any, Mapping, MutableMapping, Optional, Sequence
+from typing import Any
+from collections.abc import Mapping, MutableMapping, Sequence
 
 Key = Sequence
 
 
-def get(nd: Optional[Mapping], keys: Key, default: Any = None) -> Any:
+def get(nd: Mapping | None, keys: Key, default: Any = None) -> Any:
     """Get a value from a nested dictionary."""
     d: Any = nd
     while d and keys:

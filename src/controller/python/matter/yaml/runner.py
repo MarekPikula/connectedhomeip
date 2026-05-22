@@ -20,7 +20,7 @@ import queue
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum, IntEnum
-from typing import Any, Optional, Tuple
+from typing import Any
 
 from matter.idl.generators.filters import to_pascal_case, to_snake_case
 from matter.yamltests.pseudo_clusters.pseudo_clusters import get_default_pseudo_clusters
@@ -673,7 +673,7 @@ class DiscoveryCommandAction(BaseAction):
     """DiscoveryCommand implementation (FindCommissionable* methods)."""
 
     @staticmethod
-    def _filter_for_step(test_step) -> Tuple[discovery.FilterType, Any]:
+    def _filter_for_step(test_step) -> tuple[discovery.FilterType, Any]:
         """Given a test step, figure out the correct filters to give to
            DiscoverCommissionableNodes.
         """
@@ -714,7 +714,7 @@ class DiscoveryCommandAction(BaseAction):
             filterType=self.filterType, filter=self.filter, stopOnFirst=True, timeoutSecond=5)
 
         # Devices will be a list: [CommissionableNode(), ...]
-        LOGGER.info("Discovered devices: %r" % devices)
+        LOGGER.info(f"Discovered devices: {devices!r}")
 
         if not devices:
             LOGGER.error("No devices found")
@@ -836,8 +836,8 @@ class ReplTestRunner:
             LOGGER.warning(f"Failed to create default pseudo cluster: {e}")
             return None
 
-    def encode(self, request) -> Optional[BaseAction]:
-        action: Optional[BaseAction] = None
+    def encode(self, request) -> BaseAction | None:
+        action: BaseAction | None = None
         cluster = request.cluster.replace(' ', '').replace('/', '').replace('.', '')
         command = request.command
         if cluster == 'CommissionerCommands':
@@ -957,7 +957,7 @@ class ReplTestRunner:
 
         cluster_name = self._test_spec_definition.get_cluster_name(response.cluster_id)
         if cluster_name is None:
-            raise Exception("Cannot find cluster name for id 0x%0X / %d" % (response.cluster_id, response.cluster_id))
+            raise Exception(f"Cannot find cluster name for id 0x{response.cluster_id:0X} / {response.cluster_id}")
 
         decoded_response['clusterId'] = cluster_name
 

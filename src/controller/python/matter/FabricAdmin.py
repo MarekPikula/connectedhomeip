@@ -19,7 +19,6 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Optional
 
 from . import CertificateAuthority, ChipDeviceCtrl
 from .crypto import p256keypair
@@ -61,10 +60,10 @@ class FabricAdmin:
         LOGGER.info(f"New FabricAdmin: FabricId: 0x{self._fabricId:016X}, VendorId = 0x{self.vendorId:04X}")
 
         self._isActive = True
-        self._activeControllers: List[ChipDeviceCtrl.ChipDeviceController] = []
+        self._activeControllers: list[ChipDeviceCtrl.ChipDeviceController] = []
 
-    def NewController(self, nodeId: Optional[int] = None, paaTrustStorePath: str = "",
-                      useTestCommissioner: bool = False, catTags: List[int] = [], keypair: Optional[p256keypair.P256Keypair] = None,
+    def NewController(self, nodeId: int | None = None, paaTrustStorePath: str = "",
+                      useTestCommissioner: bool = False, catTags: list[int] = [], keypair: p256keypair.P256Keypair | None = None,
                       dacRevocationSetPath: str = ""):
         ''' Create a new matter.ChipDeviceCtrl.ChipDeviceController instance on this fabric.
 

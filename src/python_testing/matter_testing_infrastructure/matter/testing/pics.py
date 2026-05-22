@@ -17,7 +17,6 @@
 import glob
 import json
 import os
-import typing
 import xml.etree.ElementTree as ET
 
 import matter.clusters as Clusters
@@ -57,7 +56,7 @@ def client_pics_str(pics_base: str) -> str:
     return f'{pics_base}.C'
 
 
-def parse_pics(lines: typing.List[str]) -> dict[str, bool]:
+def parse_pics(lines: list[str]) -> dict[str, bool]:
     pics = {}
     for raw in lines:
         line, _, _ = raw.partition("#")
@@ -69,7 +68,7 @@ def parse_pics(lines: typing.List[str]) -> dict[str, bool]:
         key, _, val = line.partition("=")
         val = val.strip()
         if val not in ["1", "0"]:
-            raise ValueError('PICS {} must have a value of 0 or 1'.format(key))
+            raise ValueError(f'PICS {key} must have a value of 0 or 1')
 
         pics[key.strip()] = (val == "1")
     return pics
@@ -105,12 +104,12 @@ def read_pics_from_file(path: str) -> dict[str, bool]:
     if os.path.isdir(os.path.abspath(path)):
         pics_dict = {}
         for filename in glob.glob(f'{path}/*.xml'):
-            with open(filename, 'r') as f:
+            with open(filename) as f:
                 contents = f.read()
                 pics_dict.update(parse_pics_xml(contents))
         return pics_dict
 
-    with open(path, 'r') as f:
+    with open(path) as f:
         lines = f.readlines()
         return parse_pics(lines)
 

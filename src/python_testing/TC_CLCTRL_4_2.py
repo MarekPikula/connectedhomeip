@@ -36,7 +36,6 @@
 # === END CI TEST ARGUMENTS ===
 
 import logging
-import typing
 
 from mobly import asserts
 
@@ -172,7 +171,7 @@ class TC_CLCTRL_4_2(MatterBaseTest):
         timeout: uint = self.matter_test_config.timeout if self.matter_test_config.timeout is not None else self.default_timeout  # default_timeout = 90 seconds
 
         self.step(1)
-        attributes: typing.List[uint] = Clusters.ClosureControl.Attributes
+        attributes: list[uint] = Clusters.ClosureControl.Attributes
 
         self.step("2a")
         feature_map: uint = await self.read_clctrl_attribute_expect_success(endpoint=endpoint, attribute=attributes.FeatureMap)
@@ -192,7 +191,7 @@ class TC_CLCTRL_4_2(MatterBaseTest):
         log.info(f"LatchControlModes: {latch_control_modes}")
 
         self.step("2d")
-        overall_current_state: typing.Union[Nullable, Clusters.ClosureControl.Structs.OverallCurrentStateStruct] = await self.read_clctrl_attribute_expect_success(endpoint=endpoint, attribute=attributes.OverallCurrentState)
+        overall_current_state: Nullable | Clusters.ClosureControl.Structs.OverallCurrentStateStruct = await self.read_clctrl_attribute_expect_success(endpoint=endpoint, attribute=attributes.OverallCurrentState)
         current_latch: bool = None
         if overall_current_state is NullValue:
             current_latch = NullValue

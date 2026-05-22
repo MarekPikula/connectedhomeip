@@ -19,18 +19,17 @@ import os
 import subprocess
 import sys
 import unittest
-from typing import List
 
 SCRIPT_ROOT = os.path.dirname(__file__)
 
 
-def build_expected_output(source: str, root: str, out: str) -> List[str]:
+def build_expected_output(source: str, root: str, out: str) -> list[str]:
     with open(os.path.join(SCRIPT_ROOT, source)) as f:
         for line in f.readlines():
             yield line.replace("{root}", root).replace("{out}", out)
 
 
-def build_actual_output(root: str, out: str, args: List[str]) -> List[str]:
+def build_actual_output(root: str, out: str, args: list[str]) -> list[str]:
     # Fake out that we have a project root
     binary = os.path.join(SCRIPT_ROOT, 'build_examples.py')
 
@@ -72,7 +71,7 @@ def build_actual_output(root: str, out: str, args: List[str]) -> List[str]:
 
 class TestBuilder(unittest.TestCase):
 
-    def assertCommandOutput(self, expected_file: str, args: List[str]):
+    def assertCommandOutput(self, expected_file: str, args: list[str]):
         ROOT = '/TEST/BUILD/ROOT'
         OUT = '/OUTPUT/DIR'
 
@@ -83,12 +82,12 @@ class TestBuilder(unittest.TestCase):
 
         if diffs:
             reference = os.path.basename(expected_file) + '.actual'
-            with open(reference, 'wt') as fo:
+            with open(reference, "w") as fo:
                 for line in build_actual_output(ROOT, OUT, args):
                     fo.write(line.replace(ROOT, '{root}').replace(OUT, '{out}'))
 
-            msg = "DIFFERENCE between expected and generated output in %s\n" % expected_file
-            msg += "Expected file can be found in %s" % reference
+            msg = f"DIFFERENCE between expected and generated output in {expected_file}\n"
+            msg += f"Expected file can be found in {reference}"
             for line in diffs:
                 msg += ("\n   " + line.replace(ROOT,
                                                '{root}').replace(OUT, '{out}').strip())

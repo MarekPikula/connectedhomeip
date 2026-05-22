@@ -33,7 +33,6 @@
 # === END CI TEST ARGUMENTS ===
 
 import logging
-import typing
 
 from mobly import asserts
 
@@ -93,7 +92,7 @@ class TC_CLCTRL_2_1(MatterBaseTest):
 
         # STEP 2: Read AttributeList attribute to determine supported attributes
         self.step(2)
-        attribute_list: typing.List[uint] = await self.read_closurecontrol_attribute_expect_success(endpoint=endpoint, attribute=attributes.AttributeList)
+        attribute_list: list[uint] = await self.read_closurecontrol_attribute_expect_success(endpoint=endpoint, attribute=attributes.AttributeList)
         log.info(f"AttributeList: {attribute_list}")
 
         # STEP 3: Read FeatureMap attribute to determine supported features
@@ -116,7 +115,8 @@ class TC_CLCTRL_2_1(MatterBaseTest):
             asserts.assert_true(
                 is_positioning_supported and not is_instantaneous, "CountdownTime attribute should not be present if Positioning is not supported or Instantaneous is supported")
 
-            countdown_time: typing.Union[None, Nullable, uint] = await self.read_closurecontrol_attribute_expect_success(endpoint=endpoint, attribute=attributes.CountdownTime)
+            countdown_time: None | Nullable | uint = await self.read_closurecontrol_attribute_expect_success(
+                endpoint=endpoint, attribute=attributes.CountdownTime)
             log.info(f"CountdownTime: {countdown_time}")
 
             if countdown_time is not NullValue:
@@ -135,7 +135,7 @@ class TC_CLCTRL_2_1(MatterBaseTest):
 
         # STEP 6: Read CurrentErrorList attribute
         self.step(6)
-        current_error_list: typing.List[Clusters.ClosureControl.Enums.ClosureErrorEnum] = await self.read_closurecontrol_attribute_expect_success(endpoint=endpoint, attribute=attributes.CurrentErrorList)
+        current_error_list: list[Clusters.ClosureControl.Enums.ClosureErrorEnum] = await self.read_closurecontrol_attribute_expect_success(endpoint=endpoint, attribute=attributes.CurrentErrorList)
         log.info(f"CurrentErrorList: {current_error_list}")
 
         asserts.assert_less_equal(len(current_error_list), 10, "CurrentErrorList length is out of range")
@@ -148,7 +148,7 @@ class TC_CLCTRL_2_1(MatterBaseTest):
 
         # STEP 7: Read OverallCurrentState attribute
         self.step(7)
-        overall_current_state: typing.Union[Nullable, Clusters.ClosureControl.Structs.OverallCurrentStateStruct] = await self.read_closurecontrol_attribute_expect_success(endpoint=endpoint, attribute=attributes.OverallCurrentState)
+        overall_current_state: Nullable | Clusters.ClosureControl.Structs.OverallCurrentStateStruct = await self.read_closurecontrol_attribute_expect_success(endpoint=endpoint, attribute=attributes.OverallCurrentState)
 
         if overall_current_state is NullValue:
             log.info("OverallCurrentState is NULL, skipping field validations")
@@ -190,7 +190,7 @@ class TC_CLCTRL_2_1(MatterBaseTest):
 
         # STEP 8: Read OverallTargetState attribute
         self.step(8)
-        overall_target: typing.Union[Nullable, Clusters.ClosureControl.Structs.OverallTargetStateStruct] = await self.read_closurecontrol_attribute_expect_success(endpoint=endpoint, attribute=attributes.OverallTargetState)
+        overall_target: Nullable | Clusters.ClosureControl.Structs.OverallTargetStateStruct = await self.read_closurecontrol_attribute_expect_success(endpoint=endpoint, attribute=attributes.OverallTargetState)
 
         if overall_target is NullValue:
             log.info("OverallTargetState is NULL, skipping field validations")

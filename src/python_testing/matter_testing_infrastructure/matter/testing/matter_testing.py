@@ -31,9 +31,10 @@ import textwrap
 import time
 import typing
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from enum import IntFlag
-from typing import Any, Callable, List, Optional, Tuple, Type, Union
+from typing import Any, TypeAlias
+from collections.abc import Callable
 
 import matter.testing.matchers as matchers
 
@@ -69,8 +70,8 @@ from matter.tlv import uint
 # TODO: Add utilities to keep track of controllers/fabrics
 
 # Type aliases for common patterns to improve readability
-StepNumber = Union[int, str]  # Test step numbers can be integers or strings
-OptionalTimeout = Optional[int]  # Optional timeout values
+StepNumber: TypeAlias = int | str  # Test step numbers can be integers or strings
+OptionalTimeout: TypeAlias = int | None  # Optional timeout values
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.INFO)
@@ -93,7 +94,7 @@ def clear_queue(report_queue: queue.Queue):
             break
 
 
-def get_first_setup_code(dev_ctrl: ChipDeviceCtrl.ChipDeviceControllerBase, matter_test_config: MatterTestConfig) -> Optional[str]:
+def get_first_setup_code(dev_ctrl: ChipDeviceCtrl.ChipDeviceControllerBase, matter_test_config: MatterTestConfig) -> str | None:
     created_codes = []
     for idx, discriminator in enumerate(matter_test_config.discriminators):
         created_codes.append(dev_ctrl.CreateManualCode(discriminator, matter_test_config.setup_passcodes[idx]))
@@ -109,7 +110,7 @@ class AttributeValue:
     endpoint_id: int
     attribute: ClusterObjects.ClusterAttributeDescriptor
     value: Any
-    timestamp_utc: Optional[datetime] = None
+    timestamp_utc: datetime | None = None
 
 
 class AttributeMatcher:
@@ -135,7 +136,7 @@ class AttributeMatcher:
         return self._description
 
     @staticmethod
-    def from_callable(description: str, matcher: Callable[[AttributeValue], bool]) -> "AttributeMatcher":
+    def from_callable(description: str, matcher: Callable[[AttributeValue], bool]) -> AttributeMatcher:
         """Take a single callable and wrap it into an AttributeMatcher object. Useful to wrap closures."""
         class AttributeMatcherFromCallable(AttributeMatcher):
             def __init__(self, description, matcher: Callable[[AttributeValue], bool]):
@@ -176,7 +177,7 @@ class MatterBaseTest(base_test.BaseTestClass):
         # List of accumulated problems across all tests
         self.problems = []
         self.is_commissioning = False
-        self.cached_steps: dict[str, Optional[list[TestStep]]] = {}
+        self.cached_steps: dict[str, list[TestStep] | None] = {}
 
     #
     # Mobly Test Controller Methods (Framework Interface)
@@ -213,7 +214,7 @@ class MatterBaseTest(base_test.BaseTestClass):
         # TODO: Move to using non-generated code and rather use data model description (.matter or .xml)
         self.cluster_mapper = ClusterMapper(self.default_controller._Cluster)
         self.current_step_index = 0
-        self.step_start_time = datetime.now(timezone.utc)
+        self.step_start_time = datetime.now(UTC)
         self.step_skipped = False
         # self.stored_global_wildcard stores value of self.global_wildcard after first async call.
         # Because setup_class can be called before commissioning, this variable is lazy-initialized
@@ -349,8 +350,8 @@ class MatterBaseTest(base_test.BaseTestClass):
         Test authors that implement this method should ensure super().setup_test() is called before any custom setup.
         """
         self.current_step_index = 0
-        self.test_start_time = datetime.now(timezone.utc)
-        self.step_start_time = datetime.now(timezone.utc)
+        self.test_start_time = datetime.now(UTC)
+        self.step_start_time = datetime.now(UTC)
         self.step_skipped = False
         self.failed = False
         if self.runner_hook and not self.is_commissioning:
@@ -382,12 +383,12 @@ class MatterBaseTest(base_test.BaseTestClass):
             exception = record.termination_signal.exception
 
             try:
-                step_duration = (datetime.now(timezone.utc) - self.step_start_time) / timedelta(microseconds=1)
+                step_duration = (datetime.now(UTC) - self.step_start_time) / timedelta(microseconds=1)
             except AttributeError:
                 # If we failed during setup, these may not be populated
                 step_duration = 0
             try:
-                test_duration = (datetime.now(timezone.utc) - self.test_start_time) / timedelta(microseconds=1)
+                test_duration = (datetime.now(UTC) - self.test_start_time) / timedelta(microseconds=1)
             except AttributeError:
                 test_duration = 0
             # TODO: I have no idea what logger, logs, request or received are. Hope None works because I have nothing to give
@@ -475,8 +476,8 @@ class MatterBaseTest(base_test.BaseTestClass):
         if self.runner_hook and not self.is_commissioning:
             # What is request? This seems like an implementation detail for the runner
             # TODO: As with failure, I have no idea what logger, logs or request are meant to be
-            step_duration = (datetime.now(timezone.utc) - self.step_start_time) / timedelta(microseconds=1)
-            test_duration = (datetime.now(timezone.utc) - self.test_start_time) / timedelta(microseconds=1)
+            step_duration = (datetime.now(UTC) - self.step_start_time) / timedelta(microseconds=1)
+            test_duration = (datetime.now(UTC) - self.test_start_time) / timedelta(microseconds=1)
             self.runner_hook.step_success(logger=None, logs=None, duration=step_duration, request=None)
 
         # TODO: this check could easily be annoying when doing dev. flag it somehow? Ditto with the in-order check
@@ -505,7 +506,7 @@ class MatterBaseTest(base_test.BaseTestClass):
             record: TestResultRecord containing skip information.
         """
         if self.runner_hook and not self.is_commissioning:
-            test_duration = (datetime.now(timezone.utc) - self.test_start_time) / timedelta(microseconds=1)
+            test_duration = (datetime.now(UTC) - self.test_start_time) / timedelta(microseconds=1)
             test_name = self.current_test_info.name
             filename = inspect.getfile(self.__class__)
             self.runner_hook.test_skipped(filename, test_name)
@@ -553,7 +554,7 @@ class MatterBaseTest(base_test.BaseTestClass):
         return self.matter_test_config.dut_node_ids[0]
 
     @property
-    def first_setup_code(self) -> Optional[str]:
+    def first_setup_code(self) -> str | None:
         return get_first_setup_code(self.default_controller, self.matter_test_config)
 
     @property
@@ -592,7 +593,7 @@ class MatterBaseTest(base_test.BaseTestClass):
         '''
         return self.matter_test_config.wifi_passphrase if self.matter_test_config.wifi_passphrase is not None else default
 
-    def get_setup_payload_info(self) -> List[SetupPayloadInfo]:
+    def get_setup_payload_info(self) -> list[SetupPayloadInfo]:
         """
         Get and builds the payload info provided in the execution.
         Returns:
@@ -619,7 +620,7 @@ class MatterBaseTest(base_test.BaseTestClass):
         steps = self.get_defined_test_steps(test)
         return [TestStep(1, "Run entire test")] if steps is None else steps
 
-    def get_defined_test_steps(self, test: str) -> Optional[list[TestStep]]:
+    def get_defined_test_steps(self, test: str) -> list[TestStep] | None:
         """Retrieves test steps from a 'steps_*' function or AST extraction, using a cache.
 
         Checks for an explicit steps_* method first. If none exists, falls back to
@@ -641,7 +642,7 @@ class MatterBaseTest(base_test.BaseTestClass):
         self.cached_steps[test] = steps
         return steps
 
-    def get_restart_flag_file(self) -> Optional[str]:
+    def get_restart_flag_file(self) -> str | None:
         if self.matter_test_config.restart_flag_file is None:
             return None
         return str(self.matter_test_config.restart_flag_file)
@@ -658,7 +659,7 @@ class MatterBaseTest(base_test.BaseTestClass):
         pics = self._get_defined_pics(test)
         return [] if pics is None else pics
 
-    def _get_defined_pics(self, test: str) -> Optional[list[str]]:
+    def _get_defined_pics(self, test: str) -> list[str] | None:
         """Retrieve PICS list from a 'pics_*' function or @pics decorator.
 
         The pics_* method takes precedence over the @pics decorator.
@@ -700,7 +701,7 @@ class MatterBaseTest(base_test.BaseTestClass):
     # These methods are used to mark test progress for the test harness and logs, to help with test
     # debugging, issue creation and log analysis by the test labs.
 
-    def step(self, step: typing.Union[int, str], description: str = "", *,
+    def step(self, step: int | str, description: str = "", *,
              is_commissioning: bool = False, expectation: str = ""):
         """Execute a test step and manage step progression.
 
@@ -738,18 +739,18 @@ class MatterBaseTest(base_test.BaseTestClass):
             # If we've reached the next step with no assertion and the step wasn't skipped, it passed
             if not self.step_skipped and self.current_step_index != 0:
                 # TODO: As with failure, I have no idea what loger, logs or request are meant to be
-                step_duration = (datetime.now(timezone.utc) - self.step_start_time) / timedelta(microseconds=1)
+                step_duration = (datetime.now(UTC) - self.step_start_time) / timedelta(microseconds=1)
                 self.runner_hook.step_success(logger=None, logs=None, duration=step_duration, request=None)
 
             # TODO: it seems like the step start should take a number and a name
             name = f'{step} : {current_step.description}'
             self.runner_hook.step_start(name=name)
 
-        self.step_start_time = datetime.now(tz=timezone.utc)
+        self.step_start_time = datetime.now(tz=UTC)
         self.current_step_index = self.current_step_index + 1
         self.step_skipped = False
 
-    def print_step(self, stepnum: typing.Union[int, str], title: str) -> None:
+    def print_step(self, stepnum: int | str, title: str) -> None:
         """Print test step information to logs.
 
         Args:
@@ -785,7 +786,7 @@ class MatterBaseTest(base_test.BaseTestClass):
         LOGGER.info(f'**** Skipping: {num}')
         self.step_skipped = True
 
-    def mark_all_remaining_steps_skipped(self, starting_step_number: typing.Union[int, str]) -> None:
+    def mark_all_remaining_steps_skipped(self, starting_step_number: int | str) -> None:
         """Mark all remaining test steps starting with provided starting step
             starting_step_number gives the first step to be skipped, as defined in the TestStep.test_plan_number
             starting_step_number must be provided, and is not derived intentionally.
@@ -798,7 +799,7 @@ class MatterBaseTest(base_test.BaseTestClass):
         """
         self.mark_step_range_skipped(starting_step_number, None)
 
-    def mark_step_range_skipped(self, starting_step_number: typing.Union[int, str], ending_step_number: typing.Union[int, str, None]) -> None:
+    def mark_step_range_skipped(self, starting_step_number: int | str, ending_step_number: int | str | None) -> None:
         """Mark a range of remaining test steps starting with provided starting step
             starting_step_number gives the first step to be skipped, as defined in the TestStep.test_plan_number
             starting_step_number must be provided, and is not derived intentionally.
@@ -953,8 +954,8 @@ class MatterBaseTest(base_test.BaseTestClass):
             True if commissioning succeeded, False otherwise.
         """
         dev_ctrl: ChipDeviceCtrl.ChipDeviceController = self.default_controller
-        dut_node_ids: List[int] = self.matter_test_config.dut_node_ids
-        setup_payloads: List[SetupPayloadInfo] = self.get_setup_payload_info()
+        dut_node_ids: list[int] = self.matter_test_config.dut_node_ids
+        setup_payloads: list[SetupPayloadInfo] = self.get_setup_payload_info()
         commissioning_info: CommissioningInfo = CommissioningInfo(
             commissionee_ip_address_just_for_testing=self.matter_test_config.commissionee_ip_address_just_for_testing,
             commissioning_method=self.matter_test_config.commissioning_method,
@@ -969,7 +970,7 @@ class MatterBaseTest(base_test.BaseTestClass):
 
         return await commission_devices(dev_ctrl, dut_node_ids, setup_payloads, commissioning_info)
 
-    async def open_commissioning_window(self, dev_ctrl: Optional[ChipDeviceCtrl.ChipDeviceController] = None, node_id: Optional[int] = None, timeout: int = 900) -> CustomCommissioningParameters:
+    async def open_commissioning_window(self, dev_ctrl: ChipDeviceCtrl.ChipDeviceController | None = None, node_id: int | None = None, timeout: int = 900) -> CustomCommissioningParameters:
         """Open a commissioning window on the target device.
 
         Args:
@@ -998,7 +999,7 @@ class MatterBaseTest(base_test.BaseTestClass):
             raise  # Help mypy understand this never returns
 
     async def read_single_attribute(
-            self, dev_ctrl: ChipDeviceCtrl.ChipDeviceController, node_id: int, endpoint: int, attribute: Type[ClusterObjects.ClusterAttributeDescriptor], fabricFiltered: bool = True) -> object:
+            self, dev_ctrl: ChipDeviceCtrl.ChipDeviceController, node_id: int, endpoint: int, attribute: type[ClusterObjects.ClusterAttributeDescriptor], fabricFiltered: bool = True) -> object:
         """Read a single attribute value from a device.
 
         Args:
@@ -1016,8 +1017,8 @@ class MatterBaseTest(base_test.BaseTestClass):
         return list(data.values())[0][attribute]
 
     async def read_single_attribute_all_endpoints(
-            self, cluster: ClusterObjects.Cluster, attribute: Type[ClusterObjects.ClusterAttributeDescriptor],
-            dev_ctrl: Optional[ChipDeviceCtrl.ChipDeviceController] = None, node_id: Optional[int] = None):
+            self, cluster: ClusterObjects.Cluster, attribute: type[ClusterObjects.ClusterAttributeDescriptor],
+            dev_ctrl: ChipDeviceCtrl.ChipDeviceController | None = None, node_id: int | None = None):
         """Reads a single attribute of a specified cluster across all endpoints.
 
         Returns:
@@ -1038,8 +1039,8 @@ class MatterBaseTest(base_test.BaseTestClass):
         return attrs
 
     async def read_single_attribute_check_success(
-            self, cluster: ClusterObjects.Cluster, attribute: Type[ClusterObjects.ClusterAttributeDescriptor],
-            dev_ctrl: Optional[ChipDeviceCtrl.ChipDeviceController] = None, node_id: Optional[int] = None, endpoint: Optional[int] = None, fabric_filtered: bool = True, assert_on_error: bool = True, test_name: str = "", payloadCapability: int = ChipDeviceCtrl.TransportPayloadCapability.MRP_PAYLOAD) -> object:
+            self, cluster: ClusterObjects.Cluster, attribute: type[ClusterObjects.ClusterAttributeDescriptor],
+            dev_ctrl: ChipDeviceCtrl.ChipDeviceController | None = None, node_id: int | None = None, endpoint: int | None = None, fabric_filtered: bool = True, assert_on_error: bool = True, test_name: str = "", payloadCapability: int = ChipDeviceCtrl.TransportPayloadCapability.MRP_PAYLOAD) -> object:
         if dev_ctrl is None:
             dev_ctrl = self.default_controller
         if node_id is None:
@@ -1069,7 +1070,7 @@ class MatterBaseTest(base_test.BaseTestClass):
 
     async def poll_until_attributes_in_range(
             self, cluster: ClusterObjects.Cluster,
-            attribute_bounds: List[Tuple[Type[ClusterObjects.ClusterAttributeDescriptor], int, int]],
+            attribute_bounds: list[tuple[type[ClusterObjects.ClusterAttributeDescriptor], int, int]],
             timeout_sec: int = 1) -> None:
         """Poll attributes until each value falls within [min_value, max_value].
 
@@ -1092,8 +1093,8 @@ class MatterBaseTest(base_test.BaseTestClass):
                 value = await self.read_single_attribute_check_success(cluster, attribute)
 
     async def read_single_attribute_expect_error(
-            self, cluster: ClusterObjects.Cluster, attribute: Type[ClusterObjects.ClusterAttributeDescriptor],
-            error: Status, dev_ctrl: Optional[ChipDeviceCtrl.ChipDeviceController] = None, node_id: Optional[int] = None, endpoint: Optional[int] = None,
+            self, cluster: ClusterObjects.Cluster, attribute: type[ClusterObjects.ClusterAttributeDescriptor],
+            error: Status, dev_ctrl: ChipDeviceCtrl.ChipDeviceController | None = None, node_id: int | None = None, endpoint: int | None = None,
             fabric_filtered: bool = True, assert_on_error: bool = True, test_name: str = "") -> object:
         if dev_ctrl is None:
             dev_ctrl = self.default_controller
@@ -1103,7 +1104,7 @@ class MatterBaseTest(base_test.BaseTestClass):
             endpoint = self.get_endpoint()
         result = await dev_ctrl.ReadAttribute(node_id, [(endpoint, attribute)], fabricFiltered=fabric_filtered)
         attr_ret = result[endpoint][cluster][attribute]
-        err_msg = "Did not see expected error when reading {}:{}".format(str(cluster), str(attribute))
+        err_msg = f"Did not see expected error when reading {str(cluster)}:{str(attribute)}"
         error_type_ok = attr_ret is not None and isinstance(
             attr_ret, Clusters.Attribute.ValueDecodeFailure) and isinstance(attr_ret.Reason, InteractionModelError)
         if assert_on_error:
@@ -1117,7 +1118,7 @@ class MatterBaseTest(base_test.BaseTestClass):
 
         return attr_ret
 
-    async def write_single_attribute(self, attribute_value: ClusterObjects.ClusterAttributeDescriptor, endpoint_id: Optional[int] = None, expect_success: bool = True) -> Status:
+    async def write_single_attribute(self, attribute_value: ClusterObjects.ClusterAttributeDescriptor, endpoint_id: int | None = None, expect_success: bool = True) -> Status:
         """Write a single `attribute_value` on a given `endpoint_id` and assert on failure.
 
         If `endpoint_id` is None, the default DUT endpoint for the test is selected.
@@ -1139,11 +1140,11 @@ class MatterBaseTest(base_test.BaseTestClass):
 
     def read_from_app_pipe(
         self,
-        app_pipe_out: Optional[str] = None,
+        app_pipe_out: str | None = None,
         timeout: float = 2.0,
         max_bytes: int = 66536,
         chunk: int = 4096,
-        ip_env_var: Optional[str] = None,
+        ip_env_var: str | None = None,
     ) -> Any:
         """
         Read an out-of-band command from a Matter app.
@@ -1164,9 +1165,9 @@ class MatterBaseTest(base_test.BaseTestClass):
 
         if not os.path.exists(app_pipe_out):
             LOGGER.error("Named pipe %r does NOT exist", app_pipe_out)
-            raise FileNotFoundError("CANNOT FIND %r" % app_pipe_out)
+            raise FileNotFoundError(f"CANNOT FIND {app_pipe_out!r}")
 
-        dut_ip: Optional[str] = os.getenv(ip_env_var) if ip_env_var else None
+        dut_ip: str | None = os.getenv(ip_env_var) if ip_env_var else None
 
         # If no DUT IP is provided, the Matter app is assumed to be local and the command
         # is read directly from the named pipe. If a DUT IP is present, the pipe is read
@@ -1232,7 +1233,7 @@ class MatterBaseTest(base_test.BaseTestClass):
         out_str = out.decode("utf-8").strip()
         return json.loads(out_str)
 
-    def write_to_app_pipe(self, command_dict: dict, app_pipe: Optional[str] = None, ip_env_var: Optional[str] = None):
+    def write_to_app_pipe(self, command_dict: dict, app_pipe: str | None = None, ip_env_var: str | None = None):
         """
         Send an out-of-band command to a Matter app.
         Args:
@@ -1262,14 +1263,14 @@ class MatterBaseTest(base_test.BaseTestClass):
 
         if not os.path.exists(app_pipe):
             LOGGER.error("Named pipe %r does NOT exist", app_pipe)
-            raise FileNotFoundError("CANNOT FIND %r" % app_pipe)
+            raise FileNotFoundError(f"CANNOT FIND {app_pipe!r}")
 
         if not isinstance(command_dict, dict):
             raise TypeError("The command must be passed as a dictionary value")
 
         command = json.dumps(command_dict)
 
-        dut_ip: Optional[str] = os.getenv(ip_env_var) if ip_env_var else None
+        dut_ip: str | None = os.getenv(ip_env_var) if ip_env_var else None
 
         # If no DUT IP is provided, the Matter app is assumed to be local and the command
         # is read directly from the named pipe. If a DUT IP is present, the pipe is read
@@ -1288,12 +1289,12 @@ class MatterBaseTest(base_test.BaseTestClass):
             asserts.assert_true(dut_uname is not None, "The LINUX_DUT_USER environment variable must be set")
             LOGGER.info(f"Using DUT user name: {dut_uname}")
             command_fixed = shlex.quote(json.dumps(command_dict))
-            cmd = "echo \"%s\" | ssh %s@%s \'cat > %s\'" % (command_fixed, dut_uname, dut_ip, app_pipe)
+            cmd = f"echo \"{command_fixed}\" | ssh {dut_uname}@{dut_ip} \'cat > {app_pipe}\'"
             os.system(cmd)
 
     async def send_single_cmd(
             self, cmd: Clusters.ClusterObjects.ClusterCommand,
-            dev_ctrl: Optional[ChipDeviceCtrl.ChipDeviceController] = None, node_id: Optional[int] = None, endpoint: Optional[int] = None,
+            dev_ctrl: ChipDeviceCtrl.ChipDeviceController | None = None, node_id: int | None = None, endpoint: int | None = None,
             timedRequestTimeoutMs: OptionalTimeout = None,
             payloadCapability: int = ChipDeviceCtrl.TransportPayloadCapability.MRP_PAYLOAD) -> object:
         """Send a single command to a Matter device.
@@ -1319,7 +1320,7 @@ class MatterBaseTest(base_test.BaseTestClass):
         return await dev_ctrl.SendCommand(nodeId=node_id, endpoint=endpoint, payload=cmd, timedRequestTimeoutMs=timedRequestTimeoutMs,
                                           payloadCapability=payloadCapability)
 
-    async def send_test_event_triggers(self, eventTrigger: int, enableKey: Optional[bytes] = None):
+    async def send_test_event_triggers(self, eventTrigger: int, enableKey: bytes | None = None):
         """This helper function sends a test event trigger to the General Diagnostics cluster on endpoint 0
 
            The enableKey can be passed into the function, or omitted which will then
@@ -1425,7 +1426,7 @@ class MatterBaseTest(base_test.BaseTestClass):
     def wait_for_user_input(self,
                             prompt_msg: str,
                             prompt_msg_placeholder: str = "Submit anything to continue",
-                            default_value: str = "y") -> Optional[str]:
+                            default_value: str = "y") -> str | None:
         """Ask for user input and wait for it.
 
         Args:

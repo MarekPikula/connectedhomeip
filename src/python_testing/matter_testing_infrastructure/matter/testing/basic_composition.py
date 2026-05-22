@@ -25,7 +25,7 @@ import sys
 import typing
 from dataclasses import dataclass
 from pprint import pformat, pprint
-from typing import Any, Optional
+from typing import Any
 
 from mobly import asserts
 
@@ -133,7 +133,7 @@ def MatterTlvToJson(tlv_data: dict[int, Any]) -> dict[str, Any]:
 
 def JsonToMatterTlv(json_filename: str) -> AttributeCache:
     converter = TLVJsonConverter()
-    with open(json_filename, "r") as fin:
+    with open(json_filename) as fin:
         json_tlv = json.load(fin)
         return converter.convert_dump_to_cache(json_tlv)
 
@@ -151,7 +151,7 @@ class BasicCompositionTests(MatterBaseTest):
     xml_clusters: dict[int, Any]
     xml_device_types: dict[int, Any]
 
-    def dump_wildcard(self, dump_device_composition_path: typing.Optional[str]) -> tuple[str, str]:
+    def dump_wildcard(self, dump_device_composition_path: str | None) -> tuple[str, str]:
         """ Dumps a json and a txt file of the attribute wildcard for this device if the dump_device_composition_path is supplied.
             Returns the json and txt as strings.
         """
@@ -160,9 +160,9 @@ class BasicCompositionTests(MatterBaseTest):
         LOGGER.debug(f"Raw TLV contents of Node: {json_dump_string}")
 
         if dump_device_composition_path is not None:
-            with open(pathlib.Path(dump_device_composition_path).with_suffix(".json"), "wt+") as outfile:
+            with open(pathlib.Path(dump_device_composition_path).with_suffix(".json"), "w+") as outfile:
                 json.dump(node_dump_dict, outfile, indent=2)
-            with open(pathlib.Path(dump_device_composition_path).with_suffix(".txt"), "wt+") as outfile:
+            with open(pathlib.Path(dump_device_composition_path).with_suffix(".txt"), "w+") as outfile:
                 pprint(self.endpoints, outfile, indent=1, width=200, compact=True)
         return (json_dump_string, pformat(self.endpoints, indent=1, width=200, compact=True))
 
@@ -183,7 +183,7 @@ class BasicCompositionTests(MatterBaseTest):
             log_test_start()
             return
 
-        dump_device_composition_path: Optional[str] = self.user_params.get("dump_device_composition_path", None)
+        dump_device_composition_path: str | None = self.user_params.get("dump_device_composition_path", None)
 
         node_id = self.dut_node_id
 
@@ -235,7 +235,7 @@ class BasicCompositionTests(MatterBaseTest):
             return "<unknown_test>"
         return frame.f_code.co_name
 
-    def fail_current_test(self, msg: Optional[str] = None) -> typing.NoReturn:  # type: ignore[misc]
+    def fail_current_test(self, msg: str | None = None) -> typing.NoReturn:  # type: ignore[misc]
         if not msg:
             # Without a message, just log the last problem seen
             asserts.fail(msg=self.problems[-1].problem)

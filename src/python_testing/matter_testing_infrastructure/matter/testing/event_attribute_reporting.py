@@ -31,8 +31,9 @@ import logging
 import queue
 import threading
 import time
-from datetime import datetime, timezone
-from typing import Any, Iterable, Optional
+from datetime import datetime, UTC
+from typing import Any
+from collections.abc import Iterable
 
 from mobly import asserts
 
@@ -60,7 +61,7 @@ class EventSubscriptionHandler:
         _q: Internal queue that stores matching EventReadResult objects.
     """
 
-    def __init__(self, *, expected_cluster: Optional[ClusterObjects.Cluster] = None, expected_cluster_id: Optional[int] = None, expected_event_id: Optional[int] = None):
+    def __init__(self, *, expected_cluster: ClusterObjects.Cluster | None = None, expected_cluster_id: int | None = None, expected_event_id: int | None = None):
         is_cluster_mode = expected_cluster is not None
         is_id_mode = all(x is not None for x in (expected_cluster_id, expected_event_id))
 
@@ -119,14 +120,14 @@ class EventSubscriptionHandler:
         try:
             res = self._q.get(block=True, timeout=timeout_sec)
         except queue.Empty:
-            asserts.fail("Failed to receive a report for the event {}".format(expected_event))
+            asserts.fail(f"Failed to receive a report for the event {expected_event}")
 
         asserts.assert_equal(res.Header.ClusterId, expected_event.cluster_id, "Expected cluster ID not found in event report")
         asserts.assert_equal(res.Header.EventId, expected_event.event_id, "Expected event ID not found in event report")
         LOGGER.info(f"Successfully waited for {expected_event}")
         return res.Data
 
-    def wait_for_event_report_with_duplication(self, expected_event: ClusterObjects.ClusterEvent, current_event_filter_func: Any, previous_event_filter_func: Optional[Any] = None, timeout_sec: float = 10.0) -> Any:
+    def wait_for_event_report_with_duplication(self, expected_event: ClusterObjects.ClusterEvent, current_event_filter_func: Any, previous_event_filter_func: Any | None = None, timeout_sec: float = 10.0) -> Any:
         """
         Blocks waiting for the specific event to arrive within a timeout.
         It filters out leftover events matching previous_event_filter_func until an event
@@ -161,7 +162,7 @@ class EventSubscriptionHandler:
 
         asserts.fail(f"Event reported when not expected {res}")
 
-    def wait_for_event_type_report(self, event_type: ClusterObjects.ClusterEvent, timeout_sec: float) -> Optional[Any]:
+    def wait_for_event_type_report(self, event_type: ClusterObjects.ClusterEvent, timeout_sec: float) -> Any | None:
         """
         Waits for a specific event type from the event subscription handler within the timeout period.
 
@@ -187,9 +188,9 @@ class EventSubscriptionHandler:
                 return event.Data
             LOGGER.info(f"Received other event: {event.Header.EventId}, ignoring and waiting for {event_type.__name__}.")
 
-    def get_last_event(self) -> Optional[Any]:
+    def get_last_event(self) -> Any | None:
         """Flush entire queue, returning last (newest) event only."""
-        last_event: Optional[Any] = None
+        last_event: Any | None = None
         while True:
             try:
                 last_event = self._q.get(block=False)
@@ -302,7 +303,7 @@ class AttributeSubscriptionHandler:
         if valid_report:
             data = transaction.GetAttribute(path)
             value = AttributeValue(endpoint_id=path.Path.EndpointId, attribute=path.AttributeType,
-                                   value=data, timestamp_utc=datetime.now(timezone.utc))
+                                   value=data, timestamp_utc=datetime.now(UTC))
             LOGGER.info(f"[AttributeSubscriptionHandler] Received attribute report: {path.AttributeType} = {data}")
             self._q.put(value)
             if self._lock:
@@ -550,9 +551,9 @@ class AttributeSubscriptionHandler:
         with self._lock:
             return self._attribute_reports.copy()
 
-    def get_last_report(self) -> Optional[Any]:
+    def get_last_report(self) -> Any | None:
         """Flush entire queue, returning last (newest) report only."""
-        last_report: Optional[Any] = None
+        last_report: Any | None = None
         while True:
             try:
                 last_report = self._q.get(block=False)

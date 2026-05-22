@@ -16,7 +16,6 @@ import dataclasses
 import functools
 import logging
 import pprint
-from typing import Dict, List, Optional
 
 import click
 from lark import Lark
@@ -67,8 +66,7 @@ class PrefixCppDocComment:
             yield cluster
             for attribute in cluster.attributes:
                 yield attribute.definition
-            for command in cluster.commands:
-                yield command
+            yield from cluster.commands
             for struct in cluster.structs:
                 yield struct
                 for field in struct.fields:
@@ -87,7 +85,7 @@ class PrefixCppDocComment:
                     yield entry
 
     def __repr__(self):
-        return ("PREFIXDoc: %r at %r" % (self.value, self.start_pos))
+        return (f"PREFIXDoc: {self.value!r} at {self.start_pos!r}")
 
 
 class AddServerClusterToEndpointTransform:
@@ -408,8 +406,7 @@ class MatterIdlTransformer(Transformer):
                 elif operation == AttributeOperation.WRITE:
                     acl['writeacl'] = access
                 else:
-                    raise Exception(
-                        "Unknown attribute operation: %r" % operation)
+                    raise Exception(f"Unknown attribute operation: {operation!r}")
 
         return (args[-1], acl)
 
@@ -539,7 +536,7 @@ class MatterIdlTransformer(Transformer):
             elif isinstance(item, Command):
                 result.commands.append(item)
             else:
-                raise Exception("UNKNOWN cluster content item: %r" % item)
+                raise Exception(f"UNKNOWN cluster content item: {item!r}")
 
         return result
 
@@ -565,7 +562,7 @@ class MatterIdlTransformer(Transformer):
                 global_structs.append(
                     dataclasses.replace(item, is_global=True))
             else:
-                raise Exception("UNKNOWN idl content item: %r" % item)
+                raise Exception(f"UNKNOWN idl content item: {item!r}")
 
         return Idl(clusters=clusters, endpoints=endpoints, global_bitmaps=global_bitmaps, global_enums=global_enums, global_structs=global_structs)
 
@@ -579,7 +576,7 @@ class MatterIdlTransformer(Transformer):
             self.doc_comments.append(PrefixCppDocComment(token))
 
 
-def _referenced_type_names(cluster: Cluster) -> List[str]:
+def _referenced_type_names(cluster: Cluster) -> list[str]:
     """
     Return the ORDERED and UNIQUE names of all data types referenced by the given cluster.
     """
@@ -693,7 +690,7 @@ class ParserWithLines:
             }
         )
 
-    def parse(self, file: str, file_name: Optional[str] = None):
+    def parse(self, file: str, file_name: str | None = None):
         idl = self.transformer.transform(self.parser.parse(file))
         idl.parse_file_name = file_name
 
@@ -709,7 +706,7 @@ class ParserWithLines:
         #
         # A zap PR to allow us to not need this is:
         #    https://github.com/project-chip/zap/pull/1216
-        clusters: Dict[int, Cluster] = {}
+        clusters: dict[int, Cluster] = {}
         for c in idl.clusters:
             if c.code in clusters:
                 if c != clusters[c.code]:

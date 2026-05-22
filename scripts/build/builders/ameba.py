@@ -42,7 +42,7 @@ class AmebaApp(Enum):
             return 'light-switch-app'
         if self == AmebaApp.PIGWEED:
             return 'pigweed-app'
-        raise Exception('Unknown app type: %r' % self)
+        raise Exception(f'Unknown app type: {self!r}')
 
     @property
     def AppNamePrefix(self):
@@ -56,7 +56,7 @@ class AmebaApp(Enum):
             return 'chip-ameba-light-switch-app'
         if self == AmebaApp.PIGWEED:
             return 'chip-ameba-pigweed-app'
-        raise Exception('Unknown app type: %r' % self)
+        raise Exception(f'Unknown app type: {self!r}')
 
 
 class AmebaBuilder(Builder):
@@ -67,7 +67,7 @@ class AmebaBuilder(Builder):
                  output_dir_lock: OutDirLock,
                  board: AmebaBoard = AmebaBoard.AMEBAD,
                  app: AmebaApp = AmebaApp.ALL_CLUSTERS):
-        super(AmebaBuilder, self).__init__(root, runner, output_dir_lock)
+        super().__init__(root, runner, output_dir_lock)
         self.board = board
         self.app = app
 
