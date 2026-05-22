@@ -58,11 +58,6 @@ CHIP_ROOT_DIR = os.path.realpath(
     os.path.join(os.path.dirname(__file__), '../../..'))
 
 
-def checkPythonVersion():
-    if sys.version_info[0] < 3:
-        print('Must use Python 3. Current version is ' +
-              str(sys.version_info[0]))
-        exit(1)
 
 
 def checkFileExists(path):
@@ -378,7 +373,6 @@ class LockFileSerializer:
 
 
 def main():
-    checkPythonVersion()
     cmdLineArgs = runArgumentsParser()
 
     with LockFileSerializer(cmdLineArgs.lock_file) as _:
