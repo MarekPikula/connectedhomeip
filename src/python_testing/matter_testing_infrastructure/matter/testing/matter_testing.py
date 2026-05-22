@@ -33,7 +33,8 @@ import typing
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, UTC
 from enum import IntFlag
-from typing import Any, Callable, Optional, TypeAlias
+from typing import Any, Optional, TypeAlias
+from collections.abc import Callable
 
 import matter.testing.matchers as matchers
 

@@ -19,7 +19,8 @@ import os
 import re
 import subprocess
 import threading
-from typing import Optional, Pattern
+from typing import Optional
+from re import Pattern
 
 from matter.testing.tasks import SubprocessKind
 
