@@ -88,6 +88,7 @@ select = [
     "UP035",
     "UP036",
     "UP037",
+    "UP039",
 ]
 ignore = [
     "ASYNC109",  # Sometimes we use "timeout" argument in async functions

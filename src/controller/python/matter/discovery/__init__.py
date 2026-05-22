@@ -80,7 +80,7 @@ class PendingDiscovery:
 
 
 @dataclass
-class CommissionableNode():
+class CommissionableNode:
     instanceName: Optional[str] = None
     hostName: Optional[str] = None
     port: Optional[int] = None
